@@ -34,3 +34,9 @@ Thumbs.db
 
 # uv
 .python-version
+
+# Temporary and simulation media
+.tmp/
+.media/
+*.mp4
+*.avi
