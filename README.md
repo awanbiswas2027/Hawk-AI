@@ -18,6 +18,8 @@ To ensure the highest depth and professional quality, the project documentation 
 *   [03. Product Requirements Document (PRD)](file:///e:/CODING/Projects/Hawk-AI/docs/03_prd.md): User personas, functional/non-functional requirements, user journeys, and Gherkin acceptance criteria.
 *   [04. Software Requirements Specification (SRS)](file:///e:/CODING/Projects/Hawk-AI/docs/04_srs.md): IEEE 830-1998 compliant specification detailing camera, GPS, and dispatch interfaces.
 *   [05. Project Plan & Budget](file:///e:/CODING/Projects/Hawk-AI/docs/05_project_plan.md): Work Breakdown Structure (WBS), Agile sprints, milestones, and cost-benefit analysis (Edge vs. Cloud VLM transactional costs).
+*   [Interactive Roadmap Dashboard](file:///e:/CODING/Projects/Hawk-AI/roadmap.html): A fully interactive, phase-by-phase and day-by-day checklist, progress monitor, and token cost calculator tool.
+*   [Static Roadmap Artifact](file:///C:/Users/Awan%20Biswas/.gemini/antigravity/brain/6fb2270b-bdc9-4253-9720-fbda67505ab0/daywise_roadmap.md): Detailed markdown outline of the 14-day implementation optimized for the Gemini 3.5 Flash VLM.
 
 ### 2. Architecture & Design
 *   [06. System Architecture Document](file:///e:/CODING/Projects/Hawk-AI/docs/06_system_architecture.md): High-Level, component, deployment, and data flow diagrams.

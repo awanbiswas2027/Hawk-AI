@@ -1,0 +1,1816 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Hawk-AI | Traffic Infraction Review Console</title>
+  
+  <!-- Modern Typography from Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&family=Inter:wght@300;400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  
+  <!-- Leaflet Map CSS for Spatial Mapping -->
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="" />
+
+  <style>
+    /* CSS RESET & VARIABLES */
+    :root {
+      --bg-primary: hsl(222, 25%, 6%);
+      --bg-secondary: hsl(220, 24%, 10%);
+      --bg-surface: rgba(22, 28, 41, 0.7);
+      --bg-card-active: rgba(43, 56, 82, 0.45);
+      --border-glass: rgba(255, 255, 255, 0.07);
+      --border-active: rgba(99, 102, 241, 0.4);
+      
+      --text-primary: hsl(0, 0%, 96%);
+      --text-muted: hsl(220, 12%, 68%);
+      --text-dark: hsl(220, 15%, 45%);
+      
+      /* Accent Status Colors */
+      --accent-green: hsl(142, 72%, 45%);
+      --accent-green-glow: hsla(142, 72%, 45%, 0.25);
+      --accent-red: hsl(354, 76%, 53%);
+      --accent-red-glow: hsla(354, 76%, 53%, 0.25);
+      --accent-warning: hsl(38, 92%, 50%);
+      --accent-warning-glow: hsla(38, 92%, 50%, 0.2);
+      --accent-blue: hsl(217, 91%, 60%);
+      --accent-purple: hsl(258, 90%, 66%);
+
+      --font-outfit: 'Outfit', 'Inter', system-ui, -apple-system, sans-serif;
+      --font-inter: 'Inter', system-ui, sans-serif;
+      --font-mono: 'JetBrains Mono', monospace;
+      
+      --transition-smooth: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      background-color: var(--bg-primary);
+      color: var(--text-primary);
+      font-family: var(--font-inter);
+      height: 100vh;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+    }
+
+    /* TOP NAVIGATION BAR */
+    header {
+      background: linear-gradient(180deg, hsl(222, 25%, 8%) 0%, hsl(220, 24%, 5%) 100%);
+      border-bottom: 1px solid var(--border-glass);
+      padding: 0.8rem 2rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      z-index: 10;
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.25);
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+    }
+
+    .brand-logo {
+      width: 32px;
+      height: 32px;
+      background: linear-gradient(135deg, var(--accent-purple) 0%, var(--accent-blue) 100%);
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 800;
+      color: #fff;
+      font-size: 1.2rem;
+      font-family: var(--font-outfit);
+      box-shadow: 0 0 15px rgba(99, 102, 241, 0.5);
+    }
+
+    .brand-name {
+      font-family: var(--font-outfit);
+      font-weight: 700;
+      font-size: 1.4rem;
+      letter-spacing: 0.5px;
+      background: linear-gradient(to right, #fff, #a5b4fc);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    .brand-badge {
+      font-size: 0.7rem;
+      background-color: rgba(99, 102, 241, 0.2);
+      border: 1px solid rgba(99, 102, 241, 0.4);
+      color: #a5b4fc;
+      padding: 0.15rem 0.5rem;
+      border-radius: 20px;
+      font-weight: 600;
+      letter-spacing: 1px;
+    }
+
+    nav {
+      display: flex;
+      gap: 1.5rem;
+    }
+
+    nav a {
+      color: var(--text-muted);
+      text-decoration: none;
+      font-size: 0.9rem;
+      font-weight: 500;
+      padding: 0.5rem 0.8rem;
+      border-radius: 6px;
+      transition: var(--transition-smooth);
+    }
+
+    nav a:hover, nav a.active {
+      color: var(--text-primary);
+      background-color: rgba(255, 255, 255, 0.05);
+    }
+
+    nav a.active {
+      border-bottom: 2px solid var(--accent-blue);
+      border-radius: 6px 6px 0 0;
+    }
+
+    .user-profile {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      padding-left: 1.5rem;
+      border-left: 1px solid var(--border-glass);
+    }
+
+    .avatar {
+      width: 32px;
+      height: 32px;
+      border-radius: 50%;
+      background-color: var(--accent-blue);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 600;
+      font-size: 0.85rem;
+      color: white;
+    }
+
+    .user-info {
+      font-size: 0.8rem;
+    }
+
+    .user-name {
+      font-weight: 600;
+      color: var(--text-primary);
+    }
+
+    .user-role {
+      color: var(--text-muted);
+      font-size: 0.7rem;
+    }
+
+    /* MAIN APP WORKSPACE CONTAINER */
+    .dashboard-container {
+      flex: 1;
+      display: grid;
+      grid-template-columns: 360px 1fr;
+      height: calc(100vh - 60px);
+      overflow: hidden;
+    }
+
+    /* LEFT PANELS: PENDING INFRACTIONS LIST */
+    .queue-panel {
+      background-color: var(--bg-secondary);
+      border-right: 1px solid var(--border-glass);
+      display: flex;
+      flex-direction: column;
+      height: 100%;
+      overflow: hidden;
+    }
+
+    .panel-header {
+      padding: 1.25rem;
+      border-bottom: 1px solid var(--border-glass);
+      display: flex;
+      flex-direction: column;
+      gap: 0.75rem;
+    }
+
+    .panel-title {
+      font-family: var(--font-outfit);
+      font-size: 1.1rem;
+      font-weight: 600;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .stats-row {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 0.5rem;
+    }
+
+    .stat-badge {
+      background: rgba(255, 255, 255, 0.03);
+      border: 1px solid var(--border-glass);
+      border-radius: 8px;
+      padding: 0.4rem;
+      text-align: center;
+      transition: var(--transition-smooth);
+    }
+
+    .stat-badge.active-badge {
+      border-color: rgba(251, 191, 36, 0.4);
+      background: rgba(251, 191, 36, 0.05);
+    }
+
+    .stat-badge.success-badge {
+      border-color: rgba(16, 185, 129, 0.4);
+      background: rgba(16, 185, 129, 0.05);
+    }
+
+    .stat-badge.danger-badge {
+      border-color: rgba(239, 68, 68, 0.4);
+      background: rgba(239, 68, 68, 0.05);
+    }
+
+    .stat-num {
+      font-family: var(--font-outfit);
+      font-weight: 700;
+      font-size: 1.1rem;
+      display: block;
+    }
+
+    .stat-label {
+      font-size: 0.65rem;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    /* CARD SCROLLER CONTAINER */
+    .card-list {
+      flex: 1;
+      overflow-y: auto;
+      padding: 0.8rem;
+      display: flex;
+      flex-direction: column;
+      gap: 0.6rem;
+    }
+
+    /* Scrollbar Styling */
+    .card-list::-webkit-scrollbar, .detail-scroll::-webkit-scrollbar {
+      width: 6px;
+    }
+    .card-list::-webkit-scrollbar-track, .detail-scroll::-webkit-scrollbar-track {
+      background: transparent;
+    }
+    .card-list::-webkit-scrollbar-thumb, .detail-scroll::-webkit-scrollbar-thumb {
+      background: rgba(255, 255, 255, 0.1);
+      border-radius: 10px;
+    }
+
+    .infraction-card {
+      background: var(--bg-surface);
+      border: 1px solid var(--border-glass);
+      border-radius: 10px;
+      padding: 0.85rem;
+      cursor: pointer;
+      display: flex;
+      gap: 0.8rem;
+      position: relative;
+      transition: var(--transition-smooth);
+      backdrop-filter: blur(10px);
+    }
+
+    .infraction-card:hover {
+      border-color: rgba(255, 255, 255, 0.15);
+      transform: translateX(3px);
+    }
+
+    .infraction-card.active {
+      background: var(--bg-card-active);
+      border-color: var(--accent-blue);
+      box-shadow: 0 4px 20px rgba(99, 102, 241, 0.15);
+    }
+
+    .card-thumb {
+      width: 72px;
+      height: 72px;
+      border-radius: 6px;
+      background: #111827;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border: 1px solid rgba(255, 255, 255, 0.05);
+      overflow: hidden;
+      flex-shrink: 0;
+    }
+
+    .card-info {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      min-width: 0;
+    }
+
+    .card-meta {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 0.25rem;
+    }
+
+    .card-time {
+      font-size: 0.7rem;
+      color: var(--text-muted);
+    }
+
+    .card-tag {
+      font-size: 0.65rem;
+      font-weight: 600;
+      padding: 0.15rem 0.4rem;
+      border-radius: 4px;
+      text-transform: uppercase;
+      letter-spacing: 0.3px;
+    }
+
+    .tag-wrong-way {
+      background-color: rgba(239, 68, 68, 0.15);
+      color: hsl(354, 90%, 70%);
+      border: 1px solid rgba(239, 68, 68, 0.3);
+    }
+
+    .tag-no-helmet {
+      background-color: rgba(245, 158, 11, 0.15);
+      color: hsl(38, 90%, 65%);
+      border: 1px solid rgba(245, 158, 11, 0.3);
+    }
+
+    .tag-triple-ride {
+      background-color: rgba(168, 85, 247, 0.15);
+      color: hsl(268, 90%, 75%);
+      border: 1px solid rgba(168, 85, 247, 0.3);
+    }
+
+    .tag-phone {
+      background-color: rgba(59, 130, 246, 0.15);
+      color: hsl(217, 90%, 70%);
+      border: 1px solid rgba(59, 130, 246, 0.3);
+    }
+
+    .card-plate {
+      font-family: var(--font-mono);
+      font-size: 0.95rem;
+      font-weight: 700;
+      color: var(--text-primary);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .card-loc {
+      font-size: 0.75rem;
+      color: var(--text-muted);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      margin-top: 0.15rem;
+    }
+
+    .confidence-indicator {
+      display: flex;
+      align-items: center;
+      gap: 0.4rem;
+      margin-top: 0.4rem;
+    }
+
+    .confidence-label {
+      font-size: 0.65rem;
+      color: var(--text-muted);
+    }
+
+    .confidence-bar-bg {
+      flex: 1;
+      height: 4px;
+      background: rgba(255, 255, 255, 0.08);
+      border-radius: 2px;
+      overflow: hidden;
+    }
+
+    .confidence-bar-fill {
+      height: 100%;
+      border-radius: 2px;
+      background: linear-gradient(90deg, var(--accent-purple), var(--accent-blue));
+    }
+
+    .confidence-val {
+      font-size: 0.65rem;
+      font-weight: 600;
+      color: #818cf8;
+    }
+
+    /* RIGHT DISPLAY PANELS */
+    .detail-panel {
+      background-color: var(--bg-primary);
+      display: grid;
+      grid-template-rows: 1fr 200px; /* Split dashboard vertical space with map */
+      height: 100%;
+      overflow: hidden;
+    }
+
+    .detail-scroll {
+      overflow-y: auto;
+      padding: 1.5rem 2rem;
+      display: flex;
+      flex-direction: column;
+      gap: 1.5rem;
+    }
+
+    /* TITLE BAR */
+    .detail-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      border-bottom: 1px solid var(--border-glass);
+      padding-bottom: 1rem;
+    }
+
+    .detail-header-left h1 {
+      font-family: var(--font-outfit);
+      font-weight: 700;
+      font-size: 1.6rem;
+      margin-bottom: 0.35rem;
+    }
+
+    .detail-subtitle {
+      font-size: 0.85rem;
+      color: var(--text-muted);
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .detail-subtitle span {
+      display: inline-block;
+      width: 4px;
+      height: 4px;
+      border-radius: 50%;
+      background-color: var(--text-dark);
+    }
+
+    .gps-link {
+      color: #818cf8;
+      text-decoration: none;
+      display: flex;
+      align-items: center;
+      gap: 0.25rem;
+      font-weight: 500;
+      transition: var(--transition-smooth);
+    }
+
+    .gps-link:hover {
+      text-decoration: underline;
+    }
+
+    /* IMAGE PAIR CONTAINER */
+    .evidence-section {
+      display: grid;
+      grid-template-columns: 1fr 280px;
+      gap: 1.25rem;
+    }
+
+    .evidence-box {
+      background: var(--bg-secondary);
+      border: 1px solid var(--border-glass);
+      border-radius: 12px;
+      padding: 0.5rem;
+      position: relative;
+      display: flex;
+      flex-direction: column;
+      aspect-ratio: 16/10;
+      overflow: hidden;
+    }
+
+    .evidence-box-title {
+      font-size: 0.7rem;
+      font-weight: 600;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      margin: 0.25rem 0.5rem 0.5rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .evidence-canvas-container {
+      flex: 1;
+      position: relative;
+      background: #090d16;
+      border-radius: 8px;
+      overflow: hidden;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    /* Vector camera feeds using SVGs */
+    .evidence-svg {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+
+    .crop-box {
+      border-radius: 8px;
+      overflow: hidden;
+      aspect-ratio: 4/3;
+    }
+
+    .camera-hud {
+      position: absolute;
+      top: 10px;
+      left: 10px;
+      right: 10px;
+      bottom: 10px;
+      border: 1px dashed rgba(255, 255, 255, 0.15);
+      pointer-events: none;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      padding: 5px;
+    }
+
+    .hud-corner {
+      width: 12px;
+      height: 12px;
+      border-color: rgba(255, 255, 255, 0.4);
+      border-style: solid;
+      position: absolute;
+    }
+    .hud-tl { top: 0; left: 0; border-width: 2px 0 0 2px; }
+    .hud-tr { top: 0; right: 0; border-width: 2px 2px 0 0; }
+    .hud-bl { bottom: 0; left: 0; border-width: 0 0 2px 2px; }
+    .hud-br { bottom: 0; right: 0; border-width: 0 2px 2px 0; }
+
+    .rec-indicator {
+      position: absolute;
+      top: 15px;
+      right: 15px;
+      display: flex;
+      align-items: center;
+      gap: 0.4rem;
+      background: rgba(0, 0, 0, 0.6);
+      padding: 0.25rem 0.5rem;
+      border-radius: 4px;
+      font-size: 0.65rem;
+      font-family: var(--font-mono);
+      font-weight: 500;
+      color: var(--accent-red);
+      letter-spacing: 0.5px;
+    }
+
+    .rec-dot {
+      width: 6px;
+      height: 6px;
+      background-color: var(--accent-red);
+      border-radius: 50%;
+      animation: pulse 1.2s infinite ease-in-out;
+    }
+
+    @keyframes pulse {
+      0% { opacity: 0.3; transform: scale(0.9); }
+      50% { opacity: 1; transform: scale(1.2); }
+      100% { opacity: 0.3; transform: scale(0.9); }
+    }
+
+    /* EDITABLE OCR INPUT PANEL & AUDIT LOGS */
+    .editor-section {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 1.25rem;
+    }
+
+    .editor-card {
+      background: var(--bg-surface);
+      border: 1px solid var(--border-glass);
+      border-radius: 12px;
+      padding: 1.25rem;
+      backdrop-filter: blur(10px);
+      display: flex;
+      flex-direction: column;
+      gap: 0.85rem;
+    }
+
+    .editor-label {
+      font-family: var(--font-outfit);
+      font-size: 0.9rem;
+      font-weight: 600;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .plate-editor-input-wrapper {
+      position: relative;
+    }
+
+    .plate-input {
+      width: 100%;
+      background: #0b111e;
+      border: 1.5px solid var(--border-glass);
+      border-radius: 8px;
+      padding: 0.85rem 1rem;
+      color: var(--text-primary);
+      font-family: var(--font-mono);
+      font-size: 1.35rem;
+      font-weight: 700;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      text-align: center;
+      transition: var(--transition-smooth);
+    }
+
+    .plate-input:focus {
+      outline: none;
+      border-color: var(--accent-blue);
+      box-shadow: 0 0 10px rgba(99, 102, 241, 0.25);
+    }
+
+    .ind-plate-badge {
+      display: flex;
+      justify-content: center;
+      gap: 0.5rem;
+      font-size: 0.75rem;
+      margin-top: 0.5rem;
+      color: var(--text-muted);
+    }
+
+    .ind-badge {
+      background: #1e3a8a;
+      color: #93c5fd;
+      padding: 0.1rem 0.4rem;
+      border-radius: 3px;
+      font-size: 0.65rem;
+      font-weight: 600;
+    }
+
+    .audit-reasoning-box {
+      flex: 1;
+      background: rgba(9, 13, 22, 0.7);
+      border: 1px solid var(--border-glass);
+      border-radius: 8px;
+      padding: 0.8rem 1rem;
+      font-size: 0.85rem;
+      color: var(--text-muted);
+      line-height: 1.5;
+      font-family: var(--font-inter);
+      max-height: 100px;
+      overflow-y: auto;
+    }
+
+    .audit-model-badge {
+      background: rgba(139, 92, 246, 0.15);
+      color: #c084fc;
+      border: 1px solid rgba(139, 92, 246, 0.3);
+      padding: 0.15rem 0.4rem;
+      border-radius: 4px;
+      font-size: 0.65rem;
+      font-weight: 600;
+    }
+
+    /* ACTION BUTTONS PANEL */
+    .actions-panel {
+      display: flex;
+      gap: 1rem;
+      margin-top: 0.5rem;
+    }
+
+    .btn {
+      flex: 1;
+      font-family: var(--font-outfit);
+      font-weight: 600;
+      font-size: 1.05rem;
+      padding: 1rem;
+      border-radius: 10px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.5rem;
+      border: none;
+      transition: var(--transition-smooth);
+    }
+
+    .btn-approve {
+      background-color: var(--accent-green);
+      color: #0c1811;
+      box-shadow: 0 4px 15px var(--accent-green-glow);
+    }
+
+    .btn-approve:hover {
+      background-color: hsl(142, 72%, 52%);
+      transform: translateY(-2px);
+      box-shadow: 0 6px 20px rgba(16, 185, 129, 0.4);
+    }
+
+    .btn-approve:active {
+      transform: translateY(0);
+    }
+
+    .btn-reject {
+      background-color: rgba(255, 255, 255, 0.05);
+      color: var(--text-primary);
+      border: 1px solid var(--border-glass);
+    }
+
+    .btn-reject:hover {
+      background-color: rgba(239, 68, 68, 0.15);
+      border-color: var(--accent-red);
+      color: hsl(354, 90%, 75%);
+      transform: translateY(-2px);
+      box-shadow: 0 6px 20px var(--accent-red-glow);
+    }
+
+    .btn-reject:active {
+      transform: translateY(0);
+    }
+
+    .shortcut-tip {
+      font-size: 0.7rem;
+      background: rgba(255, 255, 255, 0.07);
+      color: var(--text-muted);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      padding: 0.15rem 0.35rem;
+      border-radius: 3px;
+      font-family: var(--font-mono);
+      text-transform: uppercase;
+    }
+
+    /* SPATIAL MAP BAR CONTAINER */
+    .map-container {
+      background-color: var(--bg-secondary);
+      border-top: 1px solid var(--border-glass);
+      position: relative;
+      overflow: hidden;
+      height: 100%;
+    }
+
+    #spatial-map {
+      width: 100%;
+      height: 100%;
+    }
+
+    .map-overlay-badge {
+      position: absolute;
+      top: 15px;
+      right: 15px;
+      z-index: 1000;
+      background: rgba(9, 13, 22, 0.85);
+      border: 1px solid var(--border-glass);
+      backdrop-filter: blur(8px);
+      padding: 0.4rem 0.8rem;
+      border-radius: 6px;
+      font-size: 0.75rem;
+      font-weight: 500;
+      color: var(--text-primary);
+      pointer-events: none;
+      display: flex;
+      align-items: center;
+      gap: 0.4rem;
+    }
+
+    .map-indicator-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background-color: var(--accent-blue);
+      box-shadow: 0 0 10px rgba(59, 130, 246, 0.8);
+    }
+
+    /* ALL CLEAN STATE CONTAINER */
+    .all-clean-state {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      height: 100%;
+      text-align: center;
+      padding: 2rem;
+      gap: 1.5rem;
+      grid-column: 1 / span 2;
+      background: radial-gradient(circle at center, hsl(222, 25%, 10%) 0%, var(--bg-primary) 100%);
+    }
+
+    .all-clean-logo {
+      width: 100px;
+      height: 100px;
+      border-radius: 50%;
+      background: rgba(16, 185, 129, 0.1);
+      border: 2px solid rgba(16, 185, 129, 0.3);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      animation: floating 4s ease-in-out infinite;
+      box-shadow: 0 0 30px rgba(16, 185, 129, 0.1);
+    }
+
+    @keyframes floating {
+      0% { transform: translateY(0px); }
+      50% { transform: translateY(-10px); }
+      100% { transform: translateY(0px); }
+    }
+
+    .all-clean-title {
+      font-family: var(--font-outfit);
+      font-weight: 700;
+      font-size: 2rem;
+      background: linear-gradient(135deg, #ffffff 0%, #a7f3d0 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    .all-clean-desc {
+      color: var(--text-muted);
+      max-width: 400px;
+      font-size: 0.95rem;
+      line-height: 1.5;
+    }
+
+    .btn-reset {
+      background: linear-gradient(135deg, var(--accent-purple) 0%, var(--accent-blue) 100%);
+      color: white;
+      font-family: var(--font-outfit);
+      font-weight: 600;
+      padding: 0.8rem 1.5rem;
+      border-radius: 8px;
+      border: none;
+      cursor: pointer;
+      box-shadow: 0 4px 15px rgba(99, 102, 241, 0.3);
+      transition: var(--transition-smooth);
+    }
+
+    .btn-reset:hover {
+      box-shadow: 0 6px 20px rgba(99, 102, 241, 0.5);
+      transform: translateY(-2px);
+    }
+
+    /* TOAST FEEDBACK PANEL */
+    .toast-container {
+      position: fixed;
+      bottom: 25px;
+      right: 25px;
+      z-index: 10000;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .toast {
+      background: rgba(22, 28, 41, 0.95);
+      border-left: 4px solid var(--accent-blue);
+      border-top: 1px solid var(--border-glass);
+      border-right: 1px solid var(--border-glass);
+      border-bottom: 1px solid var(--border-glass);
+      color: var(--text-primary);
+      padding: 0.85rem 1.25rem;
+      border-radius: 0 6px 6px 0;
+      font-size: 0.85rem;
+      box-shadow: 0 10px 25px rgba(0, 0, 0, 0.4);
+      display: flex;
+      align-items: center;
+      gap: 0.8rem;
+      transform: translateX(120%);
+      transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+      backdrop-filter: blur(10px);
+    }
+
+    .toast.show {
+      transform: translateX(0);
+    }
+
+    .toast-success {
+      border-left-color: var(--accent-green);
+    }
+
+    .toast-danger {
+      border-left-color: var(--accent-red);
+    }
+
+    /* ACCESSIBILITY VISUALLY HIDDEN */
+    .sr-only {
+      position: absolute;
+      width: 1px;
+      height: 1px;
+      padding: 0;
+      margin: -1px;
+      overflow: hidden;
+      clip: rect(0, 0, 0, 0);
+      white-space: nowrap;
+      border: 0;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- TOP APP BAR -->
+  <header>
+    <div class="brand">
+      <div class="brand-logo">H</div>
+      <div class="brand-name">Hawk-AI</div>
+      <span class="brand-badge">REVIEW PORTAL</span>
+    </div>
+    
+    <nav aria-label="Main Navigation">
+      <a href="#" class="active" id="nav-queue">Review Queue</a>
+      <a href="#" id="nav-records">Citation Database</a>
+      <a href="#" id="nav-devices">Device Registry</a>
+      <a href="#" id="nav-logs">Audit Log</a>
+    </nav>
+    
+    <div class="user-profile">
+      <div class="avatar" aria-hidden="true">AB</div>
+      <div class="user-info">
+        <div class="user-name">Awan Biswas</div>
+        <div class="user-role">Officer ID: #8843</div>
+      </div>
+    </div>
+  </header>
+
+  <!-- DASHBOARD WRAPPER -->
+  <main class="dashboard-container" id="main-dashboard-view">
+    
+    <!-- LEFT SIDEBAR: TICKETS LIST -->
+    <section class="queue-panel" aria-label="Violations Pending Review">
+      
+      <!-- Stats Summary Header -->
+      <div class="panel-header">
+        <div class="panel-title">
+          <span>Infraction Queue</span>
+          <span class="brand-badge" style="background: rgba(251, 191, 36, 0.1); border-color: rgba(251, 191, 36, 0.3); color: #fbbf24;" id="queue-tag">ACTIVE QUEUE</span>
+        </div>
+        
+        <div class="stats-row">
+          <div class="stat-badge active-badge" title="Pending citations to review">
+            <span class="stat-num" id="stat-pending">4</span>
+            <span class="stat-label">Pending</span>
+          </div>
+          <div class="stat-badge success-badge" title="Citations approved and dispatched">
+            <span class="stat-num" id="stat-approved">0</span>
+            <span class="stat-label">Approved</span>
+          </div>
+          <div class="stat-badge danger-badge" title="Citations discarded">
+            <span class="stat-num" id="stat-rejected">0</span>
+            <span class="stat-label">Rejected</span>
+          </div>
+        </div>
+      </div>
+      
+      <!-- List Scrollable -->
+      <div class="card-list" id="queue-card-scroller" role="list">
+        <!-- Javascript will inject cards here -->
+      </div>
+    </section>
+
+    <!-- RIGHT SPLIT PANEL: DECISION WORKSPACE -->
+    <section class="detail-panel" aria-label="Infraction Analysis Pane">
+      
+      <!-- TOP DETAIL SCROLLER -->
+      <div class="detail-scroll" id="ticket-detail-view-scroll">
+        
+        <!-- Ticket Information Header -->
+        <div class="detail-header">
+          <div class="detail-header-left">
+            <h1 id="detail-title-violation">Wrong Way Riding</h1>
+            <div class="detail-subtitle">
+              <span aria-hidden="true"></span>
+              <p id="detail-subtitle-meta">Device: RPI-4B-9831A • 12 mins ago</p>
+              <span aria-hidden="true"></span>
+              <a href="#" class="gps-link" id="detail-gps-link" target="_blank" title="Open coordinate in google maps">
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block; vertical-align:middle; margin-right:2px;"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path><circle cx="12" cy="10" r="3"></circle></svg>
+                <span id="detail-coords-text">12.9602, 77.5994</span>
+              </a>
+            </div>
+          </div>
+          
+          <div class="confidence-indicator" style="flex-direction:column; align-items:flex-end;">
+            <div style="display:flex; align-items:center; gap: 0.4rem;">
+              <span class="confidence-label">VLM Verification Confidence:</span>
+              <span class="confidence-val" id="detail-confidence-text">98%</span>
+            </div>
+            <div class="confidence-bar-bg" style="width: 150px; height: 6px; margin-top:0.25rem;">
+              <div class="confidence-bar-fill" id="detail-confidence-bar" style="width: 98%;"></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Visual Evidence Section (Dual images: Full crop vs Plate) -->
+        <div class="evidence-section">
+          
+          <!-- Full Crop Frame -->
+          <div class="evidence-box">
+            <div class="evidence-box-title">
+              <span>Edge Evidence Capture</span>
+              <span class="rec-indicator"><span class="rec-dot"></span>LIVE FEED</span>
+            </div>
+            <div class="evidence-canvas-container">
+              <!-- Inline Dynamic SVG Mocking Traffic Infraction -->
+              <svg id="svg-full-crop" class="evidence-svg" viewBox="0 0 600 375" xmlns="http://www.w3.org/2000/svg">
+                <!-- Fallback background vector grid -->
+                <rect width="100%" height="100%" fill="#0a0f1d"/>
+                <path d="M0 250 L600 250 M0 280 L600 280 M0 150 L600 200" stroke="#1b253b" stroke-width="2"/>
+                <circle cx="300" cy="150" r="80" fill="none" stroke="#2a3c5a" stroke-width="1" stroke-dasharray="5 5"/>
+                
+                <!-- Traffic camera guidelines -->
+                <line x1="100" y1="50" x2="150" y2="50" stroke="#4f46e5" stroke-width="2"/>
+                <line x1="100" y1="50" x2="100" y2="100" stroke="#4f46e5" stroke-width="2"/>
+                
+                <!-- Violation vehicle visual drawing -->
+                <g transform="translate(180, 110)">
+                  <!-- Scooter body outline -->
+                  <rect x="70" y="80" width="110" height="70" rx="10" fill="#312e81" stroke="#4f46e5" stroke-width="2"/>
+                  <!-- Wheels -->
+                  <circle cx="95" cy="150" r="22" fill="#111827" stroke="#4f46e5" stroke-width="2"/>
+                  <circle cx="155" cy="150" r="22" fill="#111827" stroke="#4f46e5" stroke-width="2"/>
+                  <!-- Rider figure -->
+                  <circle cx="120" cy="40" r="18" fill="#1e293b" stroke="#f43f5e" stroke-width="2.5"/> <!-- Helmet highlighted warning -->
+                  <!-- Red Warning Bounding box indicator -->
+                  <rect x="40" y="15" width="160" height="155" fill="none" stroke="#ef4444" stroke-width="2.5" stroke-dasharray="2 2"/>
+                  <!-- Text label -->
+                  <rect x="40" y="-12" width="110" height="20" fill="#ef4444" rx="3"/>
+                  <text x="45" y="2" fill="#fff" font-family="Outfit" font-size="10" font-weight="bold">INFRACTION ID: 01</text>
+                </g>
+              </svg>
+              <div class="camera-hud">
+                <span class="hud-corner hud-tl"></span>
+                <span class="hud-corner hud-tr"></span>
+                <span class="hud-corner hud-bl"></span>
+                <span class="hud-corner hud-br"></span>
+              </div>
+            </div>
+          </div>
+
+          <!-- License Plate Crop -->
+          <div class="evidence-box crop-box">
+            <div class="evidence-box-title">
+              <span>Plate Focus Crop (Layer 2)</span>
+              <span class="audit-model-badge" style="background:rgba(99, 102, 241, 0.15); color:#818cf8; border-color:rgba(99, 102, 241, 0.3)">ANONYMIZED</span>
+            </div>
+            <div class="evidence-canvas-container" style="background: #060910;">
+              <!-- Inline dynamic License Plate SVG -->
+              <svg id="svg-plate-crop" class="evidence-svg" viewBox="0 0 280 210" xmlns="http://www.w3.org/2000/svg">
+                <rect width="100%" height="100%" fill="#070a13"/>
+                <!-- License plate rectangle -->
+                <g transform="translate(20, 50)">
+                  <rect width="240" height="100" rx="10" fill="#fbbf24" stroke="#d97706" stroke-width="3"/>
+                  <!-- Plate details -->
+                  <rect x="10" y="10" width="20" height="80" rx="3" fill="#1d4ed8"/>
+                  <text x="15" y="45" fill="#fff" font-family="Inter" font-size="8" font-weight="bold">IND</text>
+                  <text x="15" y="70" fill="#fff" font-family="Inter" font-size="12">🇮🇳</text>
+                  <!-- Characters text -->
+                  <text x="45" y="65" fill="#000" font-family="Outfit" font-size="28" font-weight="800" letter-spacing="4px" id="svg-plate-text">KA 03 HA 5512</text>
+                </g>
+                <!-- Crop guidelines overlay -->
+                <rect x="10" y="40" width="260" height="120" fill="none" stroke="#818cf8" stroke-width="1.5" stroke-dasharray="4 4"/>
+              </svg>
+              <div class="camera-hud">
+                <span class="hud-corner hud-tl" style="border-color:#818cf8;"></span>
+                <span class="hud-corner hud-tr" style="border-color:#818cf8;"></span>
+                <span class="hud-corner hud-bl" style="border-color:#818cf8;"></span>
+                <span class="hud-corner hud-br" style="border-color:#818cf8;"></span>
+              </div>
+            </div>
+          </div>
+
+        </div>
+
+        <!-- Editable OCR & Audit logs -->
+        <div class="editor-section">
+          
+          <!-- OCR Character Editor -->
+          <div class="editor-card">
+            <label for="plate-input-field" class="editor-label">
+              <span>Extracted License Plate</span>
+              <span class="brand-badge" style="background:rgba(245, 158, 11, 0.1); border-color:rgba(245, 158, 11, 0.3); color:#fbbf24;">EDITABLE</span>
+            </label>
+            <div class="plate-editor-input-wrapper">
+              <input type="text" id="plate-input-field" class="plate-input" value="KA-03-HA-5512" autocomplete="off" aria-label="Extracted license plate text. Edit if OCR was inaccurate.">
+            </div>
+            <div class="ind-plate-badge" aria-hidden="true">
+              <span class="ind-badge">IND</span>
+              <span>Motor Vehicle Department Standard Format</span>
+            </div>
+          </div>
+
+          <!-- Secondary VLM Auditor Reasoning -->
+          <div class="editor-card">
+            <div class="editor-label">
+              <span>VLM Audit Verification</span>
+              <span class="audit-model-badge">Gemini 3.5 Flash VLM</span>
+            </div>
+            <div class="audit-reasoning-box" id="detail-reasoning-box" role="textbox" aria-readonly="true">
+              Rider is traveling counter-flow to standard traffic vector on a designated one-way ramp. Plate crop verified.
+            </div>
+            <div style="font-size:0.7rem; color:var(--text-muted); display:flex; justify-content:space-between; align-items:center;">
+              <span>Processed in 1.42 seconds</span>
+              <span>Tokens: 170 visual, 0 cached input</span>
+            </div>
+          </div>
+
+        </div>
+
+        <!-- Actions Row -->
+        <div class="actions-panel">
+          <button class="btn btn-reject" id="btn-reject-ticket">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+            Discard Citation
+            <span class="shortcut-tip" title="Keyboard hotkey D">D</span>
+          </button>
+          
+          <button class="btn btn-approve" id="btn-approve-ticket">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"></polyline></svg>
+            Approve & Dispatch
+            <span class="shortcut-tip" style="background: rgba(0,0,0,0.15); color: #0c1811; border-color: rgba(0,0,0,0.1);" title="Keyboard hotkey A">A</span>
+          </button>
+        </div>
+
+      </div>
+
+      <!-- BOTTOM PANEL: SPATIAL MAP VIEW -->
+      <div class="map-container">
+        <div id="spatial-map"></div>
+        <div class="map-overlay-badge">
+          <span class="map-indicator-dot"></span>
+          <span>Location Hotspot: <strong id="map-coords-badge">Richmond Flyover</strong></span>
+        </div>
+      </div>
+
+    </section>
+    
+  </main>
+
+  <!-- TOAST FEEDBACK ANNOUNCEMENT -->
+  <div class="toast-container" id="toast-wrapper" aria-live="polite"></div>
+
+  <!-- Leaflet map JavaScript -->
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+  
+  <script>
+    // MOCK TICKET DATA REPRESENTING EDGE CAMERA LOGS
+    const mockTickets = [
+      {
+        id: "INF-8831-23",
+        infraction: "Wrong Way Riding",
+        tagClass: "tag-wrong-way",
+        plate: "KA-03-HA-5512",
+        location: "Richmond Flyover, Bengaluru",
+        timestamp: "12 mins ago",
+        speed: "54 km/h",
+        device: "RPI-4B-9831A",
+        confidence: "98%",
+        gps: [12.9602, 77.5994],
+        reasoning: "Rider is traveling counter-flow to standard traffic vector on a designated one-way ramp. Bounding box coordinates track cross-lane directional motion. Plate crop verified.",
+        svgPlate: "KA 03 HA 5512",
+        svgFull: `
+          <rect width="100%" height="100%" fill="#0a0f1d"/>
+          <path d="M0 250 L600 250 M0 280 L600 280 M0 150 L600 200" stroke="#1b253b" stroke-width="2"/>
+          <circle cx="300" cy="150" r="80" fill="none" stroke="#2a3c5a" stroke-width="1" stroke-dasharray="5 5"/>
+          <line x1="100" y1="50" x2="150" y2="50" stroke="#4f46e5" stroke-width="2"/>
+          <line x1="100" y1="50" x2="100" y2="100" stroke="#4f46e5" stroke-width="2"/>
+          <g transform="translate(180, 110)">
+            <rect x="70" y="80" width="110" height="70" rx="10" fill="#1e1b4b" stroke="#4f46e5" stroke-width="2"/>
+            <circle cx="95" cy="150" r="22" fill="#111827" stroke="#4f46e5" stroke-width="2"/>
+            <circle cx="155" cy="150" r="22" fill="#111827" stroke="#4f46e5" stroke-width="2"/>
+            <circle cx="120" cy="40" r="18" fill="#1e293b" stroke="#f43f5e" stroke-width="2.5"/>
+            <rect x="40" y="15" width="160" height="155" fill="none" stroke="#ef4444" stroke-width="2.5" stroke-dasharray="2 2"/>
+            <rect x="40" y="-12" width="110" height="20" fill="#ef4444" rx="3"/>
+            <text x="45" y="2" fill="#fff" font-family="Outfit" font-size="10" font-weight="bold">INFRACTION ID: 01</text>
+          </g>
+        `
+      },
+      {
+        id: "INF-4482-19",
+        infraction: "No Helmet Detected",
+        tagClass: "tag-no-helmet",
+        plate: "KA-05-MJ-9981",
+        location: "MG Road Junction, Bengaluru",
+        timestamp: "24 mins ago",
+        speed: "22 km/h",
+        device: "RPI-4B-1120D",
+        confidence: "94%",
+        gps: [12.9738, 77.6119],
+        reasoning: "Primary rider is wearing a black Sikh turban (recognized, exempted); secondary passenger has bare head (no safety helmet). Visual inspection confirms hair contours. Infraction flagged correctly.",
+        svgPlate: "KA 05 MJ 9981",
+        svgFull: `
+          <rect width="100%" height="100%" fill="#0a0f1d"/>
+          <path d="M0 260 L600 260 M0 300 L600 300" stroke="#1b253b" stroke-width="2"/>
+          <circle cx="200" cy="170" r="60" fill="none" stroke="#2a3c5a" stroke-width="1" stroke-dasharray="5 5"/>
+          <g transform="translate(140, 100)">
+            <rect x="60" y="60" width="120" height="80" rx="10" fill="#1e293b" stroke="#6b7280" stroke-width="2"/>
+            <circle cx="85" cy="140" r="22" fill="#111827" stroke="#374151" stroke-width="2"/>
+            <circle cx="155" cy="140" r="22" fill="#111827" stroke="#374151" stroke-width="2"/>
+            <!-- Rider -->
+            <circle cx="100" cy="20" r="16" fill="#1d4ed8" stroke="#3b82f6" stroke-width="2"/>
+            <!-- Passenger with red alert ring -->
+            <circle cx="140" cy="25" r="15" fill="#f43f5e" stroke="#ef4444" stroke-width="2"/>
+            <circle cx="140" cy="25" r="25" fill="none" stroke="#ef4444" stroke-dasharray="4 4" stroke-width="1.5"/>
+            <rect x="30" y="-15" width="160" height="175" fill="none" stroke="#ef4444" stroke-width="2" stroke-dasharray="2 2"/>
+            <rect x="30" y="-35" width="110" height="20" fill="#ef4444" rx="3"/>
+            <text x="35" y="-21" fill="#fff" font-family="Outfit" font-size="10" font-weight="bold">INFRACTION ID: 02</text>
+          </g>
+        `
+      },
+      {
+        id: "INF-3108-99",
+        infraction: "Triple Riding",
+        tagClass: "tag-triple-ride",
+        plate: "KA-51-ED-0043",
+        location: "Outer Ring Road, Bengaluru",
+        timestamp: "1 hour ago",
+        speed: "72 km/h",
+        device: "RPI-5-0012A",
+        confidence: "97%",
+        gps: [12.9234, 77.6787],
+        reasoning: "Three distinct passenger body segments detected astride a single motor scooter. Bounding coordinates confirm overloading infraction. High risk velocity (72 km/h) compound infraction.",
+        svgPlate: "KA 51 ED 0043",
+        svgFull: `
+          <rect width="100%" height="100%" fill="#0a0f1d"/>
+          <path d="M0 240 L600 240 M0 290 L600 290" stroke="#1b253b" stroke-width="2"/>
+          <g transform="translate(170, 90)">
+            <rect x="50" y="70" width="130" height="70" rx="10" fill="#311042" stroke="#a855f7" stroke-width="2"/>
+            <circle cx="75" cy="140" r="22" fill="#111827" stroke="#a855f7" stroke-width="2"/>
+            <circle cx="155" cy="140" r="22" fill="#111827" stroke="#a855f7" stroke-width="2"/>
+            <!-- 3 Riders -->
+            <circle cx="90" cy="30" r="14" fill="#3b0764" stroke="#a855f7" stroke-width="2"/>
+            <circle cx="120" cy="25" r="14" fill="#3b0764" stroke="#a855f7" stroke-width="2"/>
+            <circle cx="150" cy="35" r="14" fill="#3b0764" stroke="#a855f7" stroke-width="2"/>
+            <rect x="30" y="5" width="160" height="155" fill="none" stroke="#ef4444" stroke-width="2.5" stroke-dasharray="2 2"/>
+            <rect x="30" y="-18" width="110" height="20" fill="#ef4444" rx="3"/>
+            <text x="35" y="-4" fill="#fff" font-family="Outfit" font-size="10" font-weight="bold">INFRACTION ID: 03</text>
+          </g>
+        `
+      },
+      {
+        id: "INF-1202-04",
+        infraction: "Phone Distraction",
+        tagClass: "tag-phone",
+        plate: "KA-02-KL-3129",
+        location: "Indiranagar 100ft Rd, Bengaluru",
+        timestamp: "2 hours ago",
+        speed: "41 km/h",
+        device: "RPI-4B-4819X",
+        confidence: "91%",
+        gps: [12.9719, 77.6412],
+        reasoning: "Handheld phone interaction detected while in transit. Left wrist of rider is positioned at cheek height clutching rectangle profile device. Infraction verified.",
+        svgPlate: "KA 02 KL 3129",
+        svgFull: `
+          <rect width="100%" height="100%" fill="#0a0f1d"/>
+          <path d="M0 240 L600 240 M0 290 L600 290" stroke="#1b253b" stroke-width="2"/>
+          <g transform="translate(190, 80)">
+            <rect x="60" y="80" width="110" height="70" rx="10" fill="#172554" stroke="#3b82f6" stroke-width="2"/>
+            <circle cx="85" cy="150" r="22" fill="#111827" stroke="#3b82f6" stroke-width="2"/>
+            <circle cx="145" cy="150" r="22" fill="#111827" stroke="#3b82f6" stroke-width="2"/>
+            <circle cx="110" cy="40" r="18" fill="#1e293b" stroke="#3b82f6" stroke-width="2"/>
+            <!-- Hand holding phone marker red -->
+            <rect x="80" y="30" width="8" height="15" rx="1" fill="#ef4444" stroke="#fca5a5" stroke-width="1"/>
+            <rect x="50" y="10" width="130" height="160" fill="none" stroke="#ef4444" stroke-width="2" stroke-dasharray="2 2"/>
+            <rect x="50" y="-15" width="110" height="20" fill="#ef4444" rx="3"/>
+            <text x="55" y="-1" fill="#fff" font-family="Outfit" font-size="10" font-weight="bold">INFRACTION ID: 04</text>
+          </g>
+        `
+      }
+    ];
+
+    // STATE VARIABLES
+    let activeTicketIndex = 0;
+    let approvedCount = 0;
+    let rejectedCount = 0;
+    let currentMap = null;
+    let currentMarker = null;
+
+    // DOM ELEMENTS
+    const cardScroller = document.getElementById("queue-card-scroller");
+    const detailTitle = document.getElementById("detail-title-violation");
+    const detailSubtitle = document.getElementById("detail-subtitle-meta");
+    const gpsLink = document.getElementById("detail-gps-link");
+    const coordsText = document.getElementById("detail-coords-text");
+    const confidenceText = document.getElementById("detail-confidence-text");
+    const confidenceBar = document.getElementById("detail-confidence-bar");
+    const plateInput = document.getElementById("plate-input-field");
+    const reasoningBox = document.getElementById("detail-reasoning-box");
+    const mapCoordsBadge = document.getElementById("map-coords-badge");
+    const btnApprove = document.getElementById("btn-approve-ticket");
+    const btnReject = document.getElementById("btn-reject-ticket");
+    const toastWrapper = document.getElementById("toast-wrapper");
+    
+    const svgFullCrop = document.getElementById("svg-full-crop");
+    const svgPlateCrop = document.getElementById("svg-plate-crop");
+    const svgPlateText = document.getElementById("svg-plate-text");
+    
+    const statPending = document.getElementById("stat-pending");
+    const statApproved = document.getElementById("stat-approved");
+    const statRejected = document.getElementById("stat-rejected");
+
+    // INITIALIZE APPLICATION
+    function init() {
+      renderCardsList();
+      loadTicketDetails(activeTicketIndex);
+      setupLeafletMap();
+      setupKeyBindings();
+      
+      // Hook up UI listeners
+      btnApprove.addEventListener("click", handleApprove);
+      btnReject.addEventListener("click", handleReject);
+      plateInput.addEventListener("input", handlePlateInput);
+    }
+
+    // RENDER LIST OF TICKETS
+    function renderCardsList() {
+      cardScroller.innerHTML = "";
+      
+      const pendingTickets = mockTickets.filter(t => !t.processed);
+      statPending.innerText = pendingTickets.length;
+      
+      if (pendingTickets.length === 0) {
+        showAllCleanState();
+        return;
+      }
+
+      mockTickets.forEach((ticket, index) => {
+        if (ticket.processed) return;
+
+        const card = document.createElement("div");
+        card.id = `ticket-card-${index}`;
+        card.className = `infraction-card ${index === activeTicketIndex ? 'active' : ''}`;
+        card.setAttribute("role", "listitem");
+        card.setAttribute("tabindex", "0");
+        
+        card.innerHTML = `
+          <div class="card-thumb">
+            <!-- Thumbnail SVG representer -->
+            <svg width="72" height="72" viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <rect width="100" height="100" fill="#0b0f19" />
+              <rect x="10" y="20" width="80" height="60" rx="4" fill="none" stroke="#222f46" stroke-width="1.5"/>
+              <rect x="25" y="35" width="50" height="30" rx="3" fill="#1e3a8a" opacity="0.6"/>
+              <rect x="35" y="45" width="30" height="10" rx="2" fill="#fbbf24" stroke="#d97706" stroke-width="1"/>
+            </svg>
+          </div>
+          <div class="card-info">
+            <div class="card-meta">
+              <span class="card-tag ${ticket.tagClass}">${ticket.infraction}</span>
+              <span class="card-time">${ticket.timestamp}</span>
+            </div>
+            <div class="card-plate">${ticket.plate}</div>
+            <div class="card-loc">${ticket.location}</div>
+            <div class="confidence-indicator">
+              <span class="confidence-label">Conf:</span>
+              <div class="confidence-bar-bg">
+                <div class="confidence-bar-fill" style="width: ${ticket.confidence};"></div>
+              </div>
+              <span class="confidence-val">${ticket.confidence}</span>
+            </div>
+          </div>
+        `;
+        
+        card.addEventListener("click", () => {
+          selectTicket(index);
+        });
+
+        card.addEventListener("keydown", (e) => {
+          if (e.key === "Enter" || e.key === " ") {
+            selectTicket(index);
+          }
+        });
+
+        cardScroller.appendChild(card);
+      });
+    }
+
+    // SELECT AN ACTIVE TICKET
+    function selectTicket(index) {
+      // Remove old active styling
+      const oldActive = document.querySelector(".infraction-card.active");
+      if (oldActive) oldActive.classList.remove("active");
+      
+      activeTicketIndex = index;
+      const newActive = document.getElementById(`ticket-card-${index}`);
+      if (newActive) newActive.classList.add("active");
+      
+      loadTicketDetails(index);
+    }
+
+    // POPULATE DISPATCH CARD DETAILS IN MAIN PANE
+    function loadTicketDetails(index) {
+      const ticket = mockTickets[index];
+      if (!ticket) return;
+
+      // Update text
+      detailTitle.innerText = ticket.infraction;
+      detailSubtitle.innerHTML = `Device: ${ticket.device} <span></span> ${ticket.timestamp}`;
+      coordsText.innerText = `${ticket.gps[0].toFixed(4)}, ${ticket.gps[1].toFixed(4)}`;
+      gpsLink.href = `https://www.google.com/maps/search/?api=1&query=${ticket.gps[0]},${ticket.gps[1]}`;
+      confidenceText.innerText = ticket.confidence;
+      confidenceBar.style.width = ticket.confidence;
+      plateInput.value = ticket.plate;
+      reasoningBox.innerText = ticket.reasoning;
+      mapCoordsBadge.innerText = ticket.location.split(',')[0];
+
+      // Update SVGs
+      svgFullCrop.innerHTML = ticket.svgFull;
+      svgPlateText.textContent = ticket.svgPlate;
+
+      // Update map marker positioning
+      updateMapMarker(ticket.gps, ticket.location);
+    }
+
+    // MAP INITIALIZER
+    function setupLeafletMap() {
+      const defaultCoord = mockTickets[0].gps;
+      
+      // Leaflet Map config
+      currentMap = L.map('spatial-map', {
+        zoomControl: false,
+        attributionControl: false
+      }).setView(defaultCoord, 14);
+
+      // Dark theme map tile layer (CartoDB Dark Matter)
+      L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
+        maxZoom: 19
+      }).addTo(currentMap);
+
+      // Add zoom control on the bottom right
+      L.control.zoom({
+        position: 'bottomright'
+      }).addTo(currentMap);
+
+      // Add first marker
+      currentMarker = L.marker(defaultCoord).addTo(currentMap)
+        .bindPopup(`<b>${mockTickets[0].infraction}</b><br>${mockTickets[0].location}`)
+        .openPopup();
+    }
+
+    // UPDATE MAP POINTER AND ANIMATE PAN
+    function updateMapMarker(gps, label) {
+      if (!currentMap || !currentMarker) return;
+      
+      currentMarker.setLatLng(gps);
+      currentMarker.setPopupContent(`<b>${mockTickets[activeTicketIndex].infraction}</b><br>${label}`);
+      
+      // Smoothly pan map
+      currentMap.panTo(gps, {
+        animate: true,
+        duration: 0.8
+      });
+      
+      // Open popup after map shifts
+      setTimeout(() => {
+        currentMarker.openPopup();
+      }, 350);
+    }
+
+    // INPUT CAPTURE LISTENER FOR PLATE EDITING
+    function handlePlateInput(e) {
+      const ticket = mockTickets[activeTicketIndex];
+      if (!ticket) return;
+
+      const formattedVal = e.target.value.toUpperCase();
+      ticket.plate = formattedVal;
+      ticket.svgPlate = formattedVal.replace(/-/g, ' ');
+      svgPlateText.textContent = ticket.svgPlate;
+
+      // Realtime update matching list card
+      const cardPlateEl = document.querySelector(`#ticket-card-${activeTicketIndex} .card-plate`);
+      if (cardPlateEl) cardPlateEl.innerText = formattedVal;
+    }
+
+    // DISPATCH ACTION TRIGGER (APPROVE)
+    function handleApprove() {
+      const ticket = mockTickets[activeTicketIndex];
+      if (!ticket) return;
+
+      ticket.processed = true;
+      approvedCount++;
+      statApproved.innerText = approvedCount;
+
+      createToast(`Citation Approved and Dispatched for ${ticket.plate}`, "toast-success");
+      advanceQueue();
+    }
+
+    // DISPATCH ACTION TRIGGER (DISCARD)
+    function handleReject() {
+      const ticket = mockTickets[activeTicketIndex];
+      if (!ticket) return;
+
+      ticket.processed = true;
+      rejectedCount++;
+      statRejected.innerText = rejectedCount;
+
+      createToast(`Violation ticket discarded.`, "toast-danger");
+      advanceQueue();
+    }
+
+    // ADVANCE QUEUE MANAGEMENT
+    function advanceQueue() {
+      const pendingIndices = mockTickets
+        .map((t, idx) => t.processed ? -1 : idx)
+        .filter(idx => idx !== -1);
+      
+      if (pendingIndices.length === 0) {
+        renderCardsList(); // Show all clean state
+        return;
+      }
+
+      // Re-render list
+      renderCardsList();
+
+      // Find next closest indices
+      let nextIndex = pendingIndices.find(idx => idx > activeTicketIndex);
+      if (nextIndex === undefined) {
+        nextIndex = pendingIndices[0]; // Wrap around
+      }
+
+      selectTicket(nextIndex);
+    }
+
+    // TOAST NOTIFICATIONS DISPATCHER
+    function createToast(message, typeClass) {
+      const toast = document.createElement("div");
+      toast.className = `toast ${typeClass}`;
+      toast.setAttribute("role", "alert");
+      
+      // Dynamic SVG Icon based on type
+      let icon = `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"></polyline></svg>`;
+      if (typeClass === 'toast-danger') {
+        icon = `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>`;
+      }
+
+      toast.innerHTML = `
+        ${icon}
+        <span>${message}</span>
+      `;
+      
+      toastWrapper.appendChild(toast);
+      
+      // Trigger CSS Transition slide-in
+      setTimeout(() => {
+        toast.classList.add("show");
+      }, 50);
+
+      // Auto clear toast after 3s
+      setTimeout(() => {
+        toast.classList.remove("show");
+        setTimeout(() => {
+          toast.remove();
+        }, 400);
+      }, 3000);
+    }
+
+    // ALL CLEAN WORKSPACE RENDERING
+    function showAllCleanState() {
+      const mainContainer = document.getElementById("main-dashboard-view");
+      mainContainer.innerHTML = `
+        <div class="all-clean-state">
+          <div class="all-clean-logo">
+            <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="#10b981" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
+              <polyline points="22 4 12 14.01 9 11.01"></polyline>
+            </svg>
+          </div>
+          <div>
+            <h2 class="all-clean-title">Review Queue Clear</h2>
+            <p class="all-clean-desc">All crowdsourced infractions have been audited. Safe riding enforcement is up to date.</p>
+          </div>
+          
+          <div style="display:flex; gap:1.5rem; margin-top:0.5rem;">
+            <div class="stat-badge success-badge" style="width:120px; padding:0.8rem;">
+              <span class="stat-num" style="font-size:1.6rem;">${approvedCount}</span>
+              <span class="stat-label">Citations Issued</span>
+            </div>
+            <div class="stat-badge danger-badge" style="width:120px; padding:0.8rem;">
+              <span class="stat-num" style="font-size:1.6rem;">${rejectedCount}</span>
+              <span class="stat-label">Tickets Discarded</span>
+            </div>
+          </div>
+          
+          <button class="btn-reset" onclick="resetQueue()">Reload Sample Incidents</button>
+        </div>
+      `;
+    }
+
+    // RESET QUEUE SIMULATION
+    window.resetQueue = function() {
+      mockTickets.forEach(t => t.processed = false);
+      approvedCount = 0;
+      rejectedCount = 0;
+      activeTicketIndex = 0;
+
+      // Rebuild initial layout
+      const mainContainer = document.getElementById("main-dashboard-view");
+      mainContainer.innerHTML = `
+        <!-- LEFT SIDEBAR: TICKETS LIST -->
+        <section class="queue-panel" aria-label="Violations Pending Review">
+          <div class="panel-header">
+            <div class="panel-title">
+              <span>Infraction Queue</span>
+              <span class="brand-badge" style="background: rgba(251, 191, 36, 0.1); border-color: rgba(251, 191, 36, 0.3); color: #fbbf24;" id="queue-tag">ACTIVE QUEUE</span>
+            </div>
+            <div class="stats-row">
+              <div class="stat-badge active-badge" title="Pending citations to review">
+                <span class="stat-num" id="stat-pending">4</span>
+                <span class="stat-label">Pending</span>
+              </div>
+              <div class="stat-badge success-badge" title="Citations approved and dispatched">
+                <span class="stat-num" id="stat-approved">0</span>
+                <span class="stat-label">Approved</span>
+              </div>
+              <div class="stat-badge danger-badge" title="Citations discarded">
+                <span class="stat-num" id="stat-rejected">0</span>
+                <span class="stat-label">Rejected</span>
+              </div>
+            </div>
+          </div>
+          <div class="card-list" id="queue-card-scroller" role="list"></div>
+        </section>
+
+        <!-- RIGHT SPLIT PANEL: DECISION WORKSPACE -->
+        <section class="detail-panel" aria-label="Infraction Analysis Pane">
+          <div class="detail-scroll" id="ticket-detail-view-scroll">
+            <div class="detail-header">
+              <div class="detail-header-left">
+                <h1 id="detail-title-violation">Wrong Way Riding</h1>
+                <div class="detail-subtitle">
+                  <span aria-hidden="true"></span>
+                  <p id="detail-subtitle-meta">Device: RPI-4B-9831A • 12 mins ago</p>
+                  <span aria-hidden="true"></span>
+                  <a href="#" class="gps-link" id="detail-gps-link" target="_blank">
+                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block; vertical-align:middle; margin-right:2px;"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path><circle cx="12" cy="10" r="3"></circle></svg>
+                    <span id="detail-coords-text">12.9602, 77.5994</span>
+                  </a>
+                </div>
+              </div>
+              <div class="confidence-indicator" style="flex-direction:column; align-items:flex-end;">
+                <div style="display:flex; align-items:center; gap: 0.4rem;">
+                  <span class="confidence-label">VLM Verification Confidence:</span>
+                  <span class="confidence-val" id="detail-confidence-text">98%</span>
+                </div>
+                <div class="confidence-bar-bg" style="width: 150px; height: 6px; margin-top:0.25rem;">
+                  <div class="confidence-bar-fill" id="detail-confidence-bar" style="width: 98%;"></div>
+                </div>
+              </div>
+            </div>
+            <div class="evidence-section">
+              <div class="evidence-box">
+                <div class="evidence-box-title">
+                  <span>Edge Evidence Capture</span>
+                  <span class="rec-indicator"><span class="rec-dot"></span>LIVE FEED</span>
+                </div>
+                <div class="evidence-canvas-container">
+                  <svg id="svg-full-crop" class="evidence-svg" viewBox="0 0 600 375" xmlns="http://www.w3.org/2000/svg"></svg>
+                  <div class="camera-hud">
+                    <span class="hud-corner hud-tl"></span>
+                    <span class="hud-corner hud-tr"></span>
+                    <span class="hud-corner hud-bl"></span>
+                    <span class="hud-corner hud-br"></span>
+                  </div>
+                </div>
+              </div>
+              <div class="evidence-box crop-box">
+                <div class="evidence-box-title">
+                  <span>Plate Focus Crop (Layer 2)</span>
+                  <span class="audit-model-badge" style="background:rgba(99, 102, 241, 0.15); color:#818cf8; border-color:rgba(99, 102, 241, 0.3)">ANONYMIZED</span>
+                </div>
+                <div class="evidence-canvas-container" style="background: #060910;">
+                  <svg id="svg-plate-crop" class="evidence-svg" viewBox="0 0 280 210" xmlns="http://www.w3.org/2000/svg">
+                    <rect width="100%" height="100%" fill="#070a13"/>
+                    <g transform="translate(20, 50)">
+                      <rect width="240" height="100" rx="10" fill="#fbbf24" stroke="#d97706" stroke-width="3"/>
+                      <rect x="10" y="10" width="20" height="80" rx="3" fill="#1d4ed8"/>
+                      <text x="15" y="45" fill="#fff" font-family="Inter" font-size="8" font-weight="bold">IND</text>
+                      <text x="15" y="70" fill="#fff" font-family="Inter" font-size="12">🇮🇳</text>
+                      <text x="45" y="65" fill="#000" font-family="Outfit" font-size="28" font-weight="800" letter-spacing="4px" id="svg-plate-text">KA 03 HA 5512</text>
+                    </g>
+                    <rect x="10" y="40" width="260" height="120" fill="none" stroke="#818cf8" stroke-width="1.5" stroke-dasharray="4 4"/>
+                  </svg>
+                  <div class="camera-hud">
+                    <span class="hud-corner hud-tl" style="border-color:#818cf8;"></span>
+                    <span class="hud-corner hud-tr" style="border-color:#818cf8;"></span>
+                    <span class="hud-corner hud-bl" style="border-color:#818cf8;"></span>
+                    <span class="hud-corner hud-br" style="border-color:#818cf8;"></span>
+                  </div>
+                </div>
+              </div>
+            </div>
+            <div class="editor-section">
+              <div class="editor-card">
+                <label for="plate-input-field" class="editor-label">
+                  <span>Extracted License Plate</span>
+                  <span class="brand-badge" style="background:rgba(245, 158, 11, 0.1); border-color:rgba(245, 158, 11, 0.3); color:#fbbf24;">EDITABLE</span>
+                </label>
+                <div class="plate-editor-input-wrapper">
+                  <input type="text" id="plate-input-field" class="plate-input" value="KA-03-HA-5512" autocomplete="off">
+                </div>
+                <div class="ind-plate-badge" aria-hidden="true">
+                  <span class="ind-badge">IND</span>
+                  <span>Motor Vehicle Department Standard Format</span>
+                </div>
+              </div>
+              <div class="editor-card">
+                <div class="editor-label">
+                  <span>VLM Audit Verification</span>
+                  <span class="audit-model-badge">Gemini 3.5 Flash VLM</span>
+                </div>
+                <div class="audit-reasoning-box" id="detail-reasoning-box" role="textbox" aria-readonly="true"></div>
+                <div style="font-size:0.7rem; color:var(--text-muted); display:flex; justify-content:space-between; align-items:center;">
+                  <span>Processed in 1.42 seconds</span>
+                  <span>Tokens: 170 visual, 0 cached input</span>
+                </div>
+              </div>
+            </div>
+            <div class="actions-panel">
+              <button class="btn btn-reject" id="btn-reject-ticket">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+                Discard Citation
+                <span class="shortcut-tip">D</span>
+              </button>
+              <button class="btn btn-approve" id="btn-approve-ticket">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                Approve & Dispatch
+                <span class="shortcut-tip" style="background: rgba(0,0,0,0.15); color: #0c1811; border-color: rgba(0,0,0,0.1);">A</span>
+              </button>
+            </div>
+          </div>
+          <div class="map-container">
+            <div id="spatial-map"></div>
+            <div class="map-overlay-badge">
+              <span class="map-indicator-dot"></span>
+              <span>Location Hotspot: <strong id="map-coords-badge">Richmond Flyover</strong></span>
+            </div>
+          </div>
+        </section>
+      `;
+
+      // Re-cache DOM pointers
+      cardScroller = document.getElementById("queue-card-scroller");
+      detailTitle = document.getElementById("detail-title-violation");
+      detailSubtitle = document.getElementById("detail-subtitle-meta");
+      gpsLink = document.getElementById("detail-gps-link");
+      coordsText = document.getElementById("detail-coords-text");
+      confidenceText = document.getElementById("detail-confidence-text");
+      confidenceBar = document.getElementById("detail-confidence-bar");
+      plateInput = document.getElementById("plate-input-field");
+      reasoningBox = document.getElementById("detail-reasoning-box");
+      mapCoordsBadge = document.getElementById("map-coords-badge");
+      btnApprove = document.getElementById("btn-approve-ticket");
+      btnReject = document.getElementById("btn-reject-ticket");
+      svgFullCrop = document.getElementById("svg-full-crop");
+      svgPlateText = document.getElementById("svg-plate-text");
+      statPending = document.getElementById("stat-pending");
+      statApproved = document.getElementById("stat-approved");
+      statRejected = document.getElementById("stat-rejected");
+
+      // Wire listeners
+      btnApprove.addEventListener("click", handleApprove);
+      btnReject.addEventListener("click", handleReject);
+      plateInput.addEventListener("input", handlePlateInput);
+
+      init();
+    };
+
+    // KEYBOARD ACCESSIBILITY BINDINGS (A = APPROVE, D = DISCARD)
+    function setupKeyBindings() {
+      document.addEventListener("keydown", (e) => {
+        // Prevent hotkeys if typing inside plate editor
+        if (document.activeElement === plateInput) return;
+
+        if (e.key === "a" || e.key === "A") {
+          const button = document.getElementById("btn-approve-ticket");
+          if (button) {
+            button.focus();
+            handleApprove();
+          }
+        } else if (e.key === "d" || e.key === "D") {
+          const button = document.getElementById("btn-reject-ticket");
+          if (button) {
+            button.focus();
+            handleReject();
+          }
+        }
+      });
+    }
+
+    // RUN STARTUP
+    document.addEventListener("DOMContentLoaded", init);
+  </script>
+</body>
+</html>

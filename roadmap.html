@@ -1,0 +1,1412 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Hawk-AI | Day-Wise Interactive Roadmap</title>
+  
+  <!-- Typography Imports -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&family=Inter:wght@300;400;500;600&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+
+  <style>
+    /* CSS VARIABLES & STYLING */
+    :root {
+      --bg-primary: hsl(223, 24%, 6%);
+      --bg-secondary: hsl(222, 23%, 10%);
+      --bg-surface: rgba(26, 32, 44, 0.7);
+      --bg-card-hover: rgba(36, 45, 62, 0.5);
+      --border-glass: rgba(255, 255, 255, 0.08);
+      
+      --text-primary: hsl(0, 0%, 95%);
+      --text-muted: hsl(220, 10%, 65%);
+      --text-dark: hsl(220, 12%, 45%);
+
+      /* Accents */
+      --accent-purple: hsl(263, 90%, 68%);
+      --accent-purple-glow: hsla(263, 90%, 68%, 0.25);
+      --accent-blue: hsl(217, 91%, 60%);
+      --accent-blue-glow: hsla(217, 91%, 60%, 0.25);
+      --accent-green: hsl(142, 70%, 45%);
+      --accent-orange: hsl(38, 92%, 50%);
+      --accent-red: hsl(354, 76%, 53%);
+
+      --font-outfit: 'Outfit', 'Inter', system-ui, sans-serif;
+      --font-inter: 'Inter', system-ui, sans-serif;
+      --font-mono: 'JetBrains Mono', monospace;
+
+      --transition-smooth: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      background-color: var(--bg-primary);
+      color: var(--text-primary);
+      font-family: var(--font-inter);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      overflow-x: hidden;
+    }
+
+    /* HEADER & PROGRESS BAR */
+    header {
+      background: linear-gradient(180deg, hsl(223, 24%, 8%) 0%, var(--bg-primary) 100%);
+      border-bottom: 1px solid var(--border-glass);
+      padding: 1.5rem 3rem;
+      display: flex;
+      flex-direction: column;
+      gap: 1.2rem;
+      z-index: 10;
+    }
+
+    .header-top {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+    }
+
+    .brand-logo {
+      width: 36px;
+      height: 36px;
+      background: linear-gradient(135deg, var(--accent-purple) 0%, var(--accent-blue) 100%);
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 800;
+      color: #fff;
+      font-size: 1.3rem;
+      font-family: var(--font-outfit);
+      box-shadow: 0 0 20px rgba(99, 102, 241, 0.4);
+    }
+
+    .brand-title h1 {
+      font-family: var(--font-outfit);
+      font-weight: 700;
+      font-size: 1.5rem;
+      letter-spacing: 0.5px;
+      background: linear-gradient(to right, #fff, #a5b4fc);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    .brand-title p {
+      font-size: 0.8rem;
+      color: var(--text-muted);
+      margin-top: 0.15rem;
+    }
+
+    /* Interactive Progress Section */
+    .progress-section {
+      background: rgba(255, 255, 255, 0.02);
+      border: 1px solid var(--border-glass);
+      border-radius: 12px;
+      padding: 1rem 1.5rem;
+      display: flex;
+      align-items: center;
+      gap: 1.5rem;
+    }
+
+    .progress-meta {
+      min-width: 140px;
+    }
+
+    .progress-title {
+      font-family: var(--font-outfit);
+      font-size: 0.8rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      color: var(--text-muted);
+    }
+
+    .progress-percent {
+      font-family: var(--font-outfit);
+      font-size: 1.8rem;
+      font-weight: 700;
+      color: var(--text-primary);
+      margin-top: 0.15rem;
+    }
+
+    .progress-bar-bg {
+      flex: 1;
+      height: 10px;
+      background: rgba(255, 255, 255, 0.05);
+      border-radius: 5px;
+      overflow: hidden;
+      box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.2);
+    }
+
+    .progress-bar-fill {
+      height: 100%;
+      width: 0%;
+      border-radius: 5px;
+      background: linear-gradient(90deg, var(--accent-purple) 0%, var(--accent-blue) 100%);
+      box-shadow: 0 0 15px rgba(99, 102, 241, 0.6);
+      transition: width 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    .btn-reset {
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid var(--border-glass);
+      color: var(--text-muted);
+      font-family: var(--font-outfit);
+      font-size: 0.8rem;
+      padding: 0.5rem 1rem;
+      border-radius: 6px;
+      cursor: pointer;
+      transition: var(--transition-smooth);
+    }
+
+    .btn-reset:hover {
+      color: var(--text-primary);
+      background: rgba(239, 68, 68, 0.15);
+      border-color: var(--accent-red);
+    }
+
+    /* MAIN CONTENT SPLIT LAYOUT */
+    .main-layout {
+      flex: 1;
+      display: grid;
+      grid-template-columns: 320px 1fr;
+      padding: 2rem 3rem;
+      gap: 2rem;
+      max-width: 1600px;
+      width: 100%;
+      margin: 0 auto;
+    }
+
+    /* SIDEBAR TAB PANELS */
+    .sidebar-panel {
+      display: flex;
+      flex-direction: column;
+      gap: 1.5rem;
+    }
+
+    .nav-card {
+      background: var(--bg-secondary);
+      border: 1px solid var(--border-glass);
+      border-radius: 12px;
+      padding: 1.25rem;
+      display: flex;
+      flex-direction: column;
+      gap: 0.6rem;
+    }
+
+    .nav-card-title {
+      font-family: var(--font-outfit);
+      font-size: 0.75rem;
+      font-weight: 600;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      margin-bottom: 0.4rem;
+    }
+
+    .phase-tab {
+      background: rgba(255, 255, 255, 0.02);
+      border: 1px solid var(--border-glass);
+      border-radius: 8px;
+      padding: 0.85rem 1rem;
+      cursor: pointer;
+      display: flex;
+      flex-direction: column;
+      gap: 0.25rem;
+      text-align: left;
+      transition: var(--transition-smooth);
+    }
+
+    .phase-tab:hover {
+      background: var(--bg-card-hover);
+      border-color: rgba(255, 255, 255, 0.15);
+    }
+
+    .phase-tab.active {
+      background: var(--bg-card-hover);
+      border-color: var(--accent-blue);
+      box-shadow: 0 4px 15px rgba(59, 130, 246, 0.1);
+    }
+
+    .tab-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .phase-num {
+      font-size: 0.65rem;
+      font-weight: 600;
+      color: var(--accent-blue);
+      text-transform: uppercase;
+    }
+
+    .phase-complete-badge {
+      font-size: 0.65rem;
+      color: var(--accent-green);
+      font-weight: 600;
+    }
+
+    .phase-name {
+      font-family: var(--font-outfit);
+      font-size: 0.95rem;
+      font-weight: 600;
+      color: var(--text-primary);
+    }
+
+    .phase-days {
+      font-size: 0.75rem;
+      color: var(--text-muted);
+    }
+
+    /* COST CALCULATOR CARD */
+    .calc-card {
+      background: var(--bg-secondary);
+      border: 1px solid var(--border-glass);
+      border-radius: 12px;
+      padding: 1.25rem;
+      display: flex;
+      flex-direction: column;
+      gap: 1rem;
+    }
+
+    .calc-input-group {
+      display: flex;
+      flex-direction: column;
+      gap: 0.4rem;
+    }
+
+    .calc-label-row {
+      display: flex;
+      justify-content: space-between;
+      font-size: 0.75rem;
+      font-weight: 500;
+    }
+
+    .calc-label {
+      color: var(--text-muted);
+    }
+
+    .calc-val {
+      font-family: var(--font-mono);
+      font-weight: 700;
+      color: var(--accent-purple);
+    }
+
+    .calc-slider {
+      -webkit-appearance: none;
+      width: 100%;
+      height: 6px;
+      border-radius: 3px;
+      background: rgba(255, 255, 255, 0.1);
+      outline: none;
+    }
+
+    .calc-slider::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      width: 16px;
+      height: 16px;
+      border-radius: 50%;
+      background: var(--accent-blue);
+      cursor: pointer;
+      box-shadow: 0 0 10px rgba(59, 130, 246, 0.5);
+      transition: var(--transition-smooth);
+    }
+
+    .calc-slider::-webkit-slider-thumb:hover {
+      transform: scale(1.2);
+    }
+
+    /* Calculator Results Visual Comparison */
+    .comparison-container {
+      display: flex;
+      flex-direction: column;
+      gap: 0.8rem;
+      background: rgba(0, 0, 0, 0.15);
+      padding: 0.85rem;
+      border-radius: 8px;
+      border: 1px solid rgba(255, 255, 255, 0.03);
+    }
+
+    .comparison-bar-row {
+      display: flex;
+      flex-direction: column;
+      gap: 0.35rem;
+    }
+
+    .bar-meta {
+      display: flex;
+      justify-content: space-between;
+      font-size: 0.7rem;
+      font-weight: 600;
+    }
+
+    .bar-label {
+      color: var(--text-muted);
+    }
+
+    .bar-price {
+      font-family: var(--font-mono);
+      font-weight: 700;
+    }
+
+    .bar-outer {
+      width: 100%;
+      height: 8px;
+      background: rgba(255, 255, 255, 0.05);
+      border-radius: 4px;
+      overflow: hidden;
+    }
+
+    .bar-inner {
+      height: 100%;
+      border-radius: 4px;
+      transition: width 0.4s cubic-bezier(0.25, 0.8, 0.25, 1);
+    }
+
+    .bar-inner-gpt {
+      background: var(--accent-red);
+      box-shadow: 0 0 10px var(--accent-red);
+    }
+
+    .bar-inner-gemini {
+      background: var(--accent-green);
+      box-shadow: 0 0 10px var(--accent-green);
+    }
+
+    .savings-badge {
+      text-align: center;
+      font-size: 0.75rem;
+      font-weight: 700;
+      color: var(--accent-green);
+      background: rgba(16, 185, 129, 0.1);
+      border: 1px solid rgba(16, 185, 129, 0.2);
+      border-radius: 6px;
+      padding: 0.35rem;
+    }
+
+    /* RIGHT MAIN PANELS: ACTIVE PHASE ROADMAP DETAIL */
+    .roadmap-panel {
+      display: flex;
+      flex-direction: column;
+      gap: 1.5rem;
+    }
+
+    .phase-intro-card {
+      background: linear-gradient(135deg, rgba(99, 102, 241, 0.05) 0%, rgba(139, 92, 246, 0.05) 100%);
+      border: 1px solid var(--border-glass);
+      border-radius: 12px;
+      padding: 1.5rem;
+      display: flex;
+      flex-direction: column;
+      gap: 0.6rem;
+      backdrop-filter: blur(10px);
+    }
+
+    .phase-badge {
+      align-self: flex-start;
+      font-size: 0.7rem;
+      background: rgba(99, 102, 241, 0.2);
+      border: 1px solid rgba(99, 102, 241, 0.4);
+      color: #a5b4fc;
+      padding: 0.2rem 0.6rem;
+      border-radius: 20px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    .phase-intro-title {
+      font-family: var(--font-outfit);
+      font-weight: 700;
+      font-size: 1.5rem;
+    }
+
+    .phase-intro-desc {
+      font-size: 0.9rem;
+      color: var(--text-muted);
+      line-height: 1.5;
+    }
+
+    /* DAY WISE CARDS */
+    .day-container {
+      display: flex;
+      flex-direction: column;
+      gap: 1rem;
+    }
+
+    .day-card {
+      background: var(--bg-surface);
+      border: 1px solid var(--border-glass);
+      border-radius: 12px;
+      padding: 1.5rem;
+      display: flex;
+      flex-direction: column;
+      gap: 1rem;
+      transition: var(--transition-smooth);
+      position: relative;
+      backdrop-filter: blur(10px);
+    }
+
+    .day-card:hover {
+      border-color: rgba(255, 255, 255, 0.12);
+      box-shadow: 0 8px 30px rgba(0, 0, 0, 0.25);
+    }
+
+    .day-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      border-bottom: 1px solid var(--border-glass);
+      padding-bottom: 0.75rem;
+    }
+
+    .day-number {
+      font-family: var(--font-outfit);
+      font-weight: 700;
+      font-size: 1.25rem;
+      color: var(--text-primary);
+      display: flex;
+      align-items: center;
+      gap: 0.6rem;
+    }
+
+    .day-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background-color: var(--accent-purple);
+      box-shadow: 0 0 10px var(--accent-purple);
+    }
+
+    .day-focus {
+      font-family: var(--font-outfit);
+      font-size: 0.9rem;
+      color: var(--text-muted);
+      font-weight: 500;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    /* CHECKBOX CHECKLIST */
+    .checklist {
+      display: flex;
+      flex-direction: column;
+      gap: 0.75rem;
+    }
+
+    .checklist-item {
+      display: flex;
+      align-items: flex-start;
+      gap: 0.75rem;
+      cursor: pointer;
+      user-select: none;
+    }
+
+    .checkbox-custom {
+      width: 18px;
+      height: 18px;
+      border-radius: 4px;
+      border: 1.5px solid var(--border-glass);
+      background-color: rgba(0, 0, 0, 0.2);
+      margin-top: 0.1rem;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+      transition: var(--transition-smooth);
+    }
+
+    .checklist-item:hover .checkbox-custom {
+      border-color: var(--accent-blue);
+      background-color: rgba(99, 102, 241, 0.05);
+    }
+
+    .checklist-item.checked .checkbox-custom {
+      background-color: var(--accent-blue);
+      border-color: var(--accent-blue);
+      box-shadow: 0 0 10px rgba(99, 102, 241, 0.4);
+    }
+
+    .checkbox-custom svg {
+      width: 12px;
+      height: 12px;
+      fill: none;
+      stroke: white;
+      stroke-width: 3;
+      stroke-dasharray: 10;
+      stroke-dashoffset: 10;
+      transition: stroke-dashoffset 0.2s ease-in-out;
+    }
+
+    .checklist-item.checked .checkbox-custom svg {
+      stroke-dashoffset: 0;
+    }
+
+    .task-text {
+      font-size: 0.9rem;
+      color: var(--text-primary);
+      line-height: 1.4;
+      transition: var(--transition-smooth);
+    }
+
+    .checklist-item.checked .task-text {
+      color: var(--text-muted);
+      text-decoration: line-through;
+      text-decoration-color: var(--text-dark);
+    }
+
+    /* DAY FOOTER: DETAILS & OPTIMIZATION */
+    .day-footer {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 1rem;
+      background: rgba(0, 0, 0, 0.15);
+      border-radius: 8px;
+      padding: 0.85rem 1rem;
+      border: 1px solid rgba(255, 255, 255, 0.02);
+    }
+
+    .footer-section {
+      display: flex;
+      flex-direction: column;
+      gap: 0.35rem;
+    }
+
+    .footer-label {
+      font-size: 0.7rem;
+      font-weight: 600;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.3px;
+    }
+
+    .footer-val {
+      font-size: 0.8rem;
+      color: var(--text-primary);
+    }
+
+    .footer-val-mono {
+      font-family: var(--font-mono);
+      font-size: 0.75rem;
+      color: #c084fc;
+    }
+
+    .optimization-tip {
+      border-left: 2px solid var(--accent-orange);
+      padding-left: 0.5rem;
+      font-size: 0.75rem;
+      color: #fbbf24;
+      line-height: 1.4;
+    }
+
+    /* ACCESSIBILITY VISUALLY HIDDEN */
+    .sr-only {
+      position: absolute;
+      width: 1px;
+      height: 1px;
+      padding: 0;
+      margin: -1px;
+      overflow: hidden;
+      clip: rect(0, 0, 0, 0);
+      white-space: nowrap;
+      border: 0;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- APP HEADER -->
+  <header>
+    <div class="header-top">
+      <div class="brand">
+        <div class="brand-logo">H</div>
+        <div class="brand-title">
+          <h1>Hawk-AI Implementation Center</h1>
+          <p>Day-Wise & Phase-Wise Production Deployment Schedule</p>
+        </div>
+      </div>
+      <button class="btn-reset" id="btn-reset-roadmap" onclick="resetProgress()">Reset All Progress</button>
+    </div>
+
+    <!-- Live Progress Bar -->
+    <div class="progress-section">
+      <div class="progress-meta">
+        <span class="progress-title">Project Progress</span>
+        <div class="progress-percent" id="project-progress-percent">0%</div>
+      </div>
+      <div class="progress-bar-bg" aria-hidden="true">
+        <div class="progress-bar-fill" id="project-progress-bar"></div>
+      </div>
+      <div style="font-size: 0.8rem; color: var(--text-muted); min-width: 100px; text-align: right;">
+        <span id="tasks-completed-num">0</span> / <span id="tasks-total-num">60</span> Tasks
+      </div>
+    </div>
+  </header>
+
+  <!-- SPLIT MAIN WORKSPACE -->
+  <main class="main-layout">
+    
+    <!-- LEFT COLUMN: SIDEBAR CONTROLS -->
+    <section class="sidebar-panel" aria-label="Roadmap Controls">
+      
+      <!-- Phase Navigation -->
+      <div class="nav-card">
+        <h2 class="nav-card-title">Select Roadmap Phase</h2>
+        
+        <button class="phase-tab active" id="tab-phase-1" onclick="switchPhase(1)">
+          <div class="tab-header">
+            <span class="phase-num">Phase 1</span>
+            <span class="phase-complete-badge" id="phase-1-badge">0/16 Done</span>
+          </div>
+          <span class="phase-name">Edge Emulation & Streams</span>
+          <span class="phase-days">Days 1–8</span>
+        </button>
+
+        <button class="phase-tab" id="tab-phase-2" onclick="switchPhase(2)">
+          <div class="tab-header">
+            <span class="phase-num">Phase 2</span>
+            <span class="phase-complete-badge" id="phase-2-badge">0/16 Done</span>
+          </div>
+          <span class="phase-name">Local AI & Privacy Blur</span>
+          <span class="phase-days">Days 9–16</span>
+        </button>
+
+        <button class="phase-tab" id="tab-phase-3" onclick="switchPhase(3)">
+          <div class="tab-header">
+            <span class="phase-num">Phase 3</span>
+            <span class="phase-complete-badge" id="phase-3-badge">0/16 Done</span>
+          </div>
+          <span class="phase-name">Ingestion API & PostGIS DB</span>
+          <span class="phase-days">Days 17–24</span>
+        </button>
+
+        <button class="phase-tab" id="tab-phase-4" onclick="switchPhase(4)">
+          <div class="tab-header">
+            <span class="phase-num">Phase 4</span>
+            <span class="phase-complete-badge" id="phase-4-badge">0/12 Done</span>
+          </div>
+          <span class="phase-name">VLM Core & Officer Portal</span>
+          <span class="phase-days">Days 25–30</span>
+        </button>
+      </div>
+
+      <!-- Live VLM Token Cost Calculator -->
+      <div class="calc-card">
+        <h2 class="nav-card-title">Live VLM OpEx Calculator</h2>
+        
+        <!-- Infractions Slider -->
+        <div class="calc-input-group">
+          <div class="calc-label-row">
+            <span class="calc-label">Daily Infraction Submissions</span>
+            <span class="calc-val" id="calc-val-infractions">20</span>
+          </div>
+          <input type="range" class="calc-slider" id="slider-infractions" min="5" max="200" step="5" value="20" aria-label="Daily infractions">
+        </div>
+
+        <!-- Vision Resolution Slider -->
+        <div class="calc-input-group">
+          <div class="calc-label-row">
+            <span class="calc-label">VLM Verification Payload</span>
+            <span class="calc-val" id="calc-val-resolution">300px Crop</span>
+          </div>
+          <input type="range" class="calc-slider" id="slider-resolution" min="0" max="1" step="1" value="0" aria-label="Vision crop state">
+        </div>
+
+        <!-- Cost Comparison Results -->
+        <div class="comparison-container">
+          <!-- GPT-4o Cost Bar -->
+          <div class="comparison-bar-row">
+            <div class="bar-meta">
+              <span class="bar-label">Naive GPT-4o (No crops)</span>
+              <span class="bar-price" id="calc-price-gpt">$5.58/mo</span>
+            </div>
+            <div class="bar-outer" aria-hidden="true">
+              <div class="bar-inner bar-inner-gpt" id="bar-width-gpt" style="width: 100%;"></div>
+            </div>
+          </div>
+          
+          <!-- Gemini 3.5 Flash Cost Bar -->
+          <div class="comparison-bar-row">
+            <div class="bar-meta">
+              <span class="bar-label">Optimized Gemini 3.5 Flash</span>
+              <span class="bar-price" id="calc-price-gemini">$0.02/mo</span>
+            </div>
+            <div class="bar-outer" aria-hidden="true">
+              <div class="bar-inner bar-inner-gemini" id="bar-width-gemini" style="width: 1%;"></div>
+            </div>
+          </div>
+
+          <div class="savings-badge" id="calc-savings-badge">
+            Saves 99.5% in Cloud API Costs
+          </div>
+        </div>
+      </div>
+
+      <!-- Simulation Environment Stack Card -->
+      <div class="calc-card" style="margin-top: 1rem;">
+        <h2 class="nav-card-title">Simulation Environment</h2>
+        <div style="display: flex; flex-direction: column; gap: 0.65rem; font-size: 0.8rem; color: var(--text-muted);">
+          <div style="display: flex; justify-content: space-between; border-bottom: 1px solid rgba(255,255,255,0.03); padding-bottom: 0.35rem;">
+            <span>Python (Edge Emulation)</span>
+            <span style="font-family: var(--font-mono); color: var(--text-primary); font-weight: 600;">v3.10+</span>
+          </div>
+          <div style="display: flex; justify-content: space-between; border-bottom: 1px solid rgba(255,255,255,0.03); padding-bottom: 0.35rem;">
+            <span>OpenCV (Video Feed Mock)</span>
+            <span style="font-family: var(--font-mono); color: var(--text-primary); font-weight: 600;">v4.8+</span>
+          </div>
+          <div style="display: flex; justify-content: space-between; border-bottom: 1px solid rgba(255,255,255,0.03); padding-bottom: 0.35rem;">
+            <span>SQLite3 (Offline Log Cache)</span>
+            <span style="font-family: var(--font-mono); color: var(--text-primary); font-weight: 600;">v3.x</span>
+          </div>
+          <div style="display: flex; justify-content: space-between; border-bottom: 1px solid rgba(255,255,255,0.03); padding-bottom: 0.35rem;">
+            <span>Docker (Postgres/PostGIS Host)</span>
+            <span style="font-family: var(--font-mono); color: var(--text-primary); font-weight: 600;">v24.x+</span>
+          </div>
+          <div style="display: flex; justify-content: space-between; border-bottom: 1px solid rgba(255,255,255,0.03); padding-bottom: 0.35rem;">
+            <span>Express & TS (Cloud Ingest API)</span>
+            <span style="font-family: var(--font-mono); color: var(--text-primary); font-weight: 600;">v4.18+</span>
+          </div>
+          <div style="display: flex; justify-content: space-between; padding-bottom: 0.35rem;">
+            <span>Leaflet.js (Admin Map)</span>
+            <span style="font-family: var(--font-mono); color: var(--text-primary); font-weight: 600;">v1.9+</span>
+          </div>
+          <div class="savings-badge" style="background: rgba(99, 102, 241, 0.1); border-color: rgba(99, 102, 241, 0.2); color: #a5b4fc; font-size: 0.8rem; margin-top: 0.4rem; padding: 0.5rem; text-align: center; font-weight: 700;">
+            100% Software Implementation
+          </div>
+        </div>
+      </div>
+
+    </section>
+
+    <!-- RIGHT COLUMN: ACTIVE PHASE ROADMAP DETAIL -->
+    <section class="roadmap-panel" id="phase-detail-pane" aria-live="polite">
+      <!-- JavaScript will inject the current active phase roadmap details here -->
+    </section>
+
+  </main>
+
+  <script>
+    // ROADMAP MOCK CONTENT WITH PHASE AND DAY CHECKS
+    const roadmapData = {
+      1: {
+        title: "Edge Emulation & Streams",
+        badge: "Phase 1: Mocking Hardware Inputs & Streams",
+        desc: "Configure the local Python simulation workspace, build mock GPS NMEA route emulators, set up OpenCV stream generators reading video file feeds, and script local memory ring-buffers.",
+        days: [
+          {
+            dayNum: 1,
+            focus: "Simulation Workspace",
+            tasks: [
+              "Setup local Python workspace and configure python virtualenv via 'uv'.",
+              "Install dependencies (opencv-python, numpy, pyserial, cryptography)."
+            ],
+            deliverable: "Standardized python environment configured for local emulation.",
+            modifiedFiles: ["edge/requirements.txt", "edge/setup_env.sh"],
+            tip: "Using python-dotenv permits quick hot-swapping between simulated and physical configuration endpoints."
+          },
+          {
+            dayNum: 2,
+            focus: "GPS Route Emulation",
+            tasks: [
+              "Write a mock GPS coordinate checkpoint generator loop in Python.",
+              "Simulate standard Bengaluru travel coordinates with dynamic speeds."
+            ],
+            deliverable: "A route emulator script outputting realistic coordinates.",
+            modifiedFiles: ["edge/sim/gps_emulator.py"],
+            tip: "Add small random floating deviations to simulated speeds to mimic signals in city tunnels."
+          },
+          {
+            dayNum: 3,
+            focus: "Mock GPS Daemon",
+            tasks: [
+              "Integrate GPRMC sentence parsing in GPS simulation loop.",
+              "Enable localized port interfaces outputting simulated NMEA strings."
+            ],
+            deliverable: "Simulated NMEA coordinate streaming server.",
+            modifiedFiles: ["edge/gps_daemon.py"],
+            tip: "Listen on localhost port 5000 to mimic serial port hardware reads without physical connections."
+          },
+          {
+            dayNum: 4,
+            focus: "Mock Video Streams",
+            tasks: [
+              "Place a sample traffic video feed (1080p MP4) inside mock media folders.",
+              "Write a video player reader script using OpenCV cv2.VideoCapture."
+            ],
+            deliverable: "Python class continuously fetching frames from video files.",
+            modifiedFiles: ["edge/sim/media_feed.py"],
+            tip: "Enforce loops on the sample video file to support uninterrupted hours of simulated riding."
+          },
+          {
+            dayNum: 5,
+            focus: "Threaded Frame Grabber",
+            tasks: [
+              "Implement threaded frame grabbers synchronizing read frame timings.",
+              "Incorporate rate-limiters matching standard 15 FPS camera feeds."
+            ],
+            deliverable: "Thread-safe grabber fetching video arrays in background.",
+            modifiedFiles: ["edge/camera_stream.py"],
+            tip: "Use thread-safe queue.Queue queues to transport grabbed video frames to inference tasks."
+          },
+          {
+            dayNum: 6,
+            focus: "RAM Ring Buffers",
+            tasks: [
+              "Develop memory ring-buffers using collections.deque arrays.",
+              "Write buffers retention rules retaining the last 5 seconds of footage."
+            ],
+            deliverable: "Rolling memory buffer capturing video feeds without disk writes.",
+            modifiedFiles: ["edge/buffer_manager.py"],
+            tip: "Deletes oldest frames automatically once max length (75 frames) is exceeded."
+          },
+          {
+            dayNum: 7,
+            focus: "Local DB Design",
+            tasks: [
+              "Configure local SQLite schema design for offline infraction entries.",
+              "Design tables linking timestamps, coordinates, and blurred frame routes."
+            ],
+            deliverable: "Local database database schemas mapped out.",
+            modifiedFiles: ["edge/db/schema.sql"],
+            tip: "Index both timestamps and synced flags to retrieve pending cache items instantly."
+          },
+          {
+            dayNum: 8,
+            focus: "SQLite Writers",
+            tasks: [
+              "Build SQLite write interfaces logging triggered infraction details.",
+              "Program transaction failure handlers and write locking guards."
+            ],
+            deliverable: "Secure SQLite transactions module saving metadata locally.",
+            modifiedFiles: ["edge/db/writer.py"],
+            tip: "Execute SQLite commands inside transactions (BEGIN/COMMIT) to protect database integrity."
+          }
+        ]
+      },
+      2: {
+        title: "Local AI & Privacy Blur",
+        badge: "Phase 2: Local Detections & Privacy Blurring",
+        desc: "Quantize and load YOLOv8 models for helmet/vehicle checks, write spatial infraction checking triggers, build ROI license plate crops extraction, and program local anonymization blurring filters.",
+        days: [
+          {
+            dayNum: 9,
+            focus: "Local YOLOv8 Setup",
+            tasks: [
+              "Export pre-trained YOLOv8-nano weights into ONNX formats.",
+              "Run local inference tests of YOLO model via ONNX runtime scripts."
+            ],
+            deliverable: "Running local computer vision script classifying frame layers.",
+            modifiedFiles: ["edge/inference.py"],
+            tip: "Running YOLO on laptop CPUs yields >30 FPS, making mock testing highly responsive."
+          },
+          {
+            dayNum: 10,
+            focus: "Helmet rules logic",
+            tasks: [
+              "Write coordinate bounding box check rules logic.",
+              "Verify overlap checkers flagging riders without safety helmets."
+            ],
+            deliverable: "Logic triggers logging bareheaded motorcycle riders.",
+            modifiedFiles: ["edge/rules/helmet_rules.py"],
+            tip: "Flag infractions only if rider coordinate overlaps the scooter bounding box vertically."
+          },
+          {
+            dayNum: 11,
+            focus: "Directional Tracking",
+            tasks: [
+              "Develop coordinates history logging classes in rules loops.",
+              "Write vector wrong-way riding rules checks."
+            ],
+            deliverable: "Triggers capturing vehicles traveling contraflow.",
+            modifiedFiles: ["edge/rules/wrong_way.py"],
+            tip: "Track directional change of bounding box center arrays across 10 consecutive frames."
+          },
+          {
+            dayNum: 12,
+            focus: "Plate ROI Cropper",
+            tasks: [
+              "Implement bounding box cropper models isolating license plate areas.",
+              "Include boundary paddings (10%) on cropped plate visuals."
+            ],
+            deliverable: "Image cropper saving isolated vehicle plates snaps.",
+            modifiedFiles: ["edge/cropper.py"],
+            tip: "Cropping plates before upload limits VLM input visual tokens by up to 80%."
+          },
+          {
+            dayNum: 13,
+            focus: "Face Blurring Filter",
+            tasks: [
+              "Program face detection bounding boxes blur functions.",
+              "Apply Gaussian blur kernels on bystander coordinates."
+            ],
+            deliverable: "Anonymizer service blurring innocent pedestrian faces.",
+            modifiedFiles: ["edge/anonymizer.py"],
+            tip: "Use cv2.GaussianBlur with kernel dimensions (15, 15) to ensure faces are unrecognizable."
+          },
+          {
+            dayNum: 14,
+            focus: "Plate Blurring Filter",
+            tasks: [
+              "Write vehicle classification filter logic.",
+              "Apply blur filters to non-violating vehicle license plates."
+            ],
+            deliverable: "Privacy modules blurring plates of bystanders.",
+            modifiedFiles: ["edge/privacy_filter.py"],
+            tip: "Only keep the license plate of the violating vehicle unblurred to maintain privacy compliance."
+          },
+          {
+            dayNum: 15,
+            focus: "Archive Encrypter",
+            tasks: [
+              "Develop archive zip generator compressing snaps and coordinates JSON.",
+              "Implement AES-256 encryptor wrappers protecting generated zips."
+            ],
+            deliverable: "Secure zipped payload archives ready for synchronization.",
+            modifiedFiles: ["edge/encryptor.py"],
+            tip: "Always generate temporary zip archives inside memory buffers to skip redundant disk cycles."
+          },
+          {
+            dayNum: 16,
+            focus: "Watchdog emulator",
+            tasks: [
+              "Build background monitoring runner tracking edge loops.",
+              "Write script to automatically restart emulated daemons on exception crashes."
+            ],
+            deliverable: "Auto-recovering emulated edge pipelines.",
+            modifiedFiles: ["edge/watchdog_sim.py"],
+            tip: "Trigger system emails or dashboard alerts if mock edge runners fail to recover within 3 retries."
+          }
+        ]
+      },
+      3: {
+        title: "Ingestion API & PostGIS DB",
+        badge: "Phase 3: Building Cloud Ingestion Server & Databases",
+        desc: "Build the Express REST server foundation, implement HMAC authentication, write package decrypters, configure PostgreSQL with PostGIS mapping extensions, and index coordinate targets.",
+        days: [
+          {
+            dayNum: 17,
+            focus: "Express Backend Init",
+            tasks: [
+              "Initialize Node.js Express server workspace using TypeScript.",
+              "Configure tsconfig compile boundaries and environment files."
+            ],
+            deliverable: "Compiled Express TS server template running locally.",
+            modifiedFiles: ["backend/package.json", "backend/tsconfig.json"],
+            tip: "Verify Node version is v18+ to leverage native HTTP fetch requests."
+          },
+          {
+            dayNum: 18,
+            focus: "POST Ingestion routes",
+            tasks: [
+              "Program multer multi-part handlers inside API routes.",
+              "Build POST /api/v1/ingest controllers handling uploaded zips."
+            ],
+            deliverable: "Ingestion API receiving test edge zip archives.",
+            modifiedFiles: ["backend/src/routes/ingest.ts"],
+            tip: "Configure multer disk-storage paths inside local directories to simplify cleanup."
+          },
+          {
+            dayNum: 19,
+            focus: "HMAC Authenticator",
+            tasks: [
+              "Code HMAC verification middlewares protecting REST endpoints.",
+              "Incorporate API key rate-limiters on cloud paths."
+            ],
+            deliverable: "Authenticating layers verifying arriving edge request signatures.",
+            modifiedFiles: ["backend/src/middleware/auth.ts"],
+            tip: "Use crypto.createHmac in Node to parse signature hashes rapidly."
+          },
+          {
+            dayNum: 20,
+            focus: "Cloud Zip Decrypter",
+            tasks: [
+              "Develop archive unpacking and AES decryption services.",
+              "Write file validation layers checking zip contents."
+            ],
+            deliverable: "Decrypted JSON data and visual frames extracted to server cache.",
+            modifiedFiles: ["backend/src/services/decrypter.ts"],
+            tip: "Run strict JSON structure validation checks before parsing metadata."
+          },
+          {
+            dayNum: 21,
+            focus: "PostGIS Docker Setup",
+            tasks: [
+              "Build docker-compose configuration hosting PostgreSQL instance.",
+              "Enable spatial mapping PostGIS extensions inside Postgres container."
+            ],
+            deliverable: "Spatial Postgres container active and listening.",
+            modifiedFiles: ["docker-compose.yml"],
+            tip: "Expose PostGIS database on a custom port inside local Docker networks to guard access."
+          },
+          {
+            dayNum: 22,
+            focus: "Relational Schemas",
+            tasks: [
+              "Define PostgreSQL table tables for devices, citations, and violations.",
+              "Establish relational constraints and cascade parameters."
+            ],
+            deliverable: "SQL schema structure successfully executed in DB.",
+            modifiedFiles: ["backend/src/db/schema.sql"],
+            tip: "Create enum types for citation states to keep tracking values standardized."
+          },
+          {
+            dayNum: 23,
+            focus: "Spatial Indexing",
+            tasks: [
+              "Implement coordinate tables mapping latitude/longitude properties.",
+              "Create spatial GIST indices on location fields."
+            ],
+            deliverable: "Coordinates table structured and optimized for geo-queries.",
+            modifiedFiles: ["backend/src/db/indexes.sql"],
+            tip: "Use GIST indexes to run rapid bounding queries across thousands of coordinates."
+          },
+          {
+            dayNum: 24,
+            focus: "Geo queries scripting",
+            tasks: [
+              "Write SQL scripts querying infractions within target coordinates.",
+              "Implement repeat offender queries based on plate matching."
+            ],
+            deliverable: "Geo queries database helpers active.",
+            modifiedFiles: ["backend/src/db/queries.ts"],
+            tip: "Use ST_DWithin queries to identify repeating infractions within 50 meters of high-risk crossings."
+          }
+        ]
+      },
+      4: {
+        title: "VLM Core & Officer Portal",
+        badge: "Phase 4: Integrating Gemini VLM & Building Admin Portal",
+        desc: "Integrate Gemini 3.5 Flash VLM API, configure prompt caching rules, build responsive officer dashboard views, draw Leaflet maps overlays, and implement PDF receipt dispatch services.",
+        days: [
+          {
+            dayNum: 25,
+            focus: "Gemini SDK Client",
+            tasks: [
+              "Integrate Google Gen AI SDK client services.",
+              "Program core SDK connection handles with API key environments."
+            ],
+            deliverable: "Active Gemini API client connector module.",
+            modifiedFiles: ["backend/src/services/gemini.ts"],
+            tip: "Ensure your API key is correctly configured inside .env before running tests."
+          },
+          {
+            dayNum: 26,
+            focus: "VLM JSON Schemas",
+            tasks: [
+              "Write structured JSON schemas matching infraction output objects.",
+              "Define types mapping class enums and license text outputs."
+            ],
+            deliverable: "Structured output validation models defined.",
+            modifiedFiles: ["backend/src/config/schemas.ts"],
+            tip: "Declare strict plate format rules to guide Gemini OCR extractions."
+          },
+          {
+            dayNum: 27,
+            focus: "Prompt Caching setup",
+            tasks: [
+              "Configure prompt cache setups on Gemini API calls.",
+              "Optimize system prompt wording structures to meet size thresholds."
+            ],
+            deliverable: "VLM verification class utilizing cached system parameters.",
+            modifiedFiles: ["backend/src/services/vlm.ts"],
+            tip: "Pre-seed system context to over 1,024 tokens to qualify for Gemini prompt caches."
+          },
+          {
+            dayNum: 28,
+            focus: "Admin Portal layout",
+            tasks: [
+              "Build responsive review queue page layout.",
+              "Implement keyboard accessibility hotkey navigation mappings."
+            ],
+            deliverable: "HTML review dashboard UI console completed.",
+            modifiedFiles: ["index.html"],
+            tip: "Incorporate CSS glassmorphism filters to render modern aesthetic review queues."
+          },
+          {
+            dayNum: 29,
+            focus: "Leaflet Map Overlay",
+            tasks: [
+              "Integrate Leaflet.js interactive maps on review cards.",
+              "Write marker updates pan animations inside map controls."
+            ],
+            deliverable: "Review map interface overlaying violation coordinates.",
+            modifiedFiles: ["index.html"],
+            tip: "Use CartoDB Dark Matter street map tiles to align map tiles with dark UI themes."
+          },
+          {
+            dayNum: 30,
+            focus: "SMTP & E2E Validation",
+            tasks: [
+              "Program Nodemailer SMTP dispatcher forwarding PDF citations.",
+              "Execute full edge-to-cloud automated emulations validating logic streams."
+            ],
+            deliverable: "Completed, fully verified software-only ecosystem.",
+            modifiedFiles: ["backend/src/services/mail.ts", "test/e2e.test.ts"],
+            tip: "Configure mock SMTP servers (Mailhog) to audit ticket PDF dispatch flows locally."
+          }
+        ]
+      }
+    };
+
+    // STATE CONTROLLERS
+    let currentPhase = 1;
+    const completedTasks = new Set();
+    const totalTasksCount = 60; 
+
+    // CALCULATOR INPUTS
+    const sliderInfractions = document.getElementById("slider-infractions");
+    const valInfractions = document.getElementById("calc-val-infractions");
+    const sliderResolution = document.getElementById("slider-resolution");
+    const valResolution = document.getElementById("calc-val-resolution");
+
+    const priceGpt = document.getElementById("calc-price-gpt");
+    const priceGemini = document.getElementById("calc-price-gemini");
+    const barGpt = document.getElementById("bar-width-gpt");
+    const barGemini = document.getElementById("bar-width-gemini");
+    const savingsBadge = document.getElementById("calc-savings-badge");
+
+    // INITIALIZATION
+    document.addEventListener("DOMContentLoaded", () => {
+      loadSavedState();
+      switchPhase(currentPhase);
+      updateProgress();
+      setupCalculatorListeners();
+      calculateCosts();
+    });
+
+    // SWITCH BETWEEN ROADMAP PHASES
+    window.switchPhase = function(phaseNum) {
+      // Toggle Tab Styles
+      document.querySelectorAll(".phase-tab").forEach(tab => tab.classList.remove("active"));
+      document.getElementById(`tab-phase-${phaseNum}`).classList.add("active");
+      
+      currentPhase = phaseNum;
+      renderPhaseDetails(phaseNum);
+    };
+
+    // RENDER MAIN ROADMAP DETAIL COLUMN
+    function renderPhaseDetails(phaseNum) {
+      const phase = roadmapData[phaseNum];
+      const detailPane = document.getElementById("phase-detail-pane");
+      
+      let daysHtml = "";
+      phase.days.forEach(day => {
+        let checklistHtml = "";
+        day.tasks.forEach((task, tIdx) => {
+          const taskId = `task-p${phaseNum}-d${day.dayNum}-t${tIdx}`;
+          const isChecked = completedTasks.has(taskId);
+          
+          checklistHtml += `
+            <div class="checklist-item ${isChecked ? 'checked' : ''}" 
+                 onclick="toggleTask('${taskId}')" 
+                 id="item-${taskId}">
+              <div class="checkbox-custom" aria-hidden="true">
+                <svg viewBox="0 0 24 24">
+                  <polyline points="20 6 9 17 4 12"></polyline>
+                </svg>
+              </div>
+              <span class="task-text">${task}</span>
+            </div>
+          `;
+        });
+
+        // Files Modified list
+        let filesHtml = day.modifiedFiles.map(f => `<span class="footer-val-mono">${f}</span>`).join(", ");
+
+        daysHtml += `
+          <div class="day-card" id="card-day-${day.dayNum}">
+            <div class="day-header">
+              <div class="day-number">
+                <span class="day-dot"></span>
+                <span>Day ${day.dayNum}</span>
+              </div>
+              <span class="day-focus">${day.focus}</span>
+            </div>
+            
+            <div class="checklist">
+              ${checklistHtml}
+            </div>
+            
+            <div class="day-footer">
+              <div class="footer-section">
+                <span class="footer-label">Target Files</span>
+                <div class="footer-val">${filesHtml}</div>
+              </div>
+              <div class="footer-section">
+                <span class="footer-label">Expected Deliverable</span>
+                <span class="footer-val">${day.deliverable}</span>
+              </div>
+            </div>
+
+            <div class="optimization-tip">
+              💡 <strong>Token-Saving Tip:</strong> ${day.tip}
+            </div>
+          </div>
+        `;
+      });
+
+      detailPane.innerHTML = `
+        <div class="phase-intro-card">
+          <span class="phase-badge">${phase.badge}</span>
+          <h2 class="phase-intro-title">${phase.title}</h2>
+          <p class="phase-intro-desc">${phase.desc}</p>
+        </div>
+        <div class="day-container">
+          ${daysHtml}
+        </div>
+      `;
+    }
+
+    // TOGGLE TASK COMPLETION STATE
+    window.toggleTask = function(taskId) {
+      const item = document.getElementById(`item-${taskId}`);
+      if (!item) return;
+
+      if (completedTasks.has(taskId)) {
+        completedTasks.delete(taskId);
+        item.classList.remove("checked");
+      } else {
+        completedTasks.add(taskId);
+        item.classList.add("checked");
+      }
+
+      saveState();
+      updateProgress();
+    };
+
+    // RE-CALCULATE AND ANIMATE PROGRESS UPDATES
+    function updateProgress() {
+      // Calculate overall progress
+      const totalTasks = totalTasksCount;
+      const completed = completedTasks.size;
+      const percent = totalTasks > 0 ? Math.round((completed / totalTasks) * 100) : 0;
+      
+      document.getElementById("project-progress-percent").innerText = `${percent}%`;
+      document.getElementById("project-progress-bar").style.width = `${percent}%`;
+      document.getElementById("tasks-completed-num").innerText = completed;
+
+      // Update Phase Badge numbers
+      for (let p = 1; p <= 4; p++) {
+        let pTotal = 0;
+        let pChecked = 0;
+        
+        // Count tasks in phase p
+        roadmapData[p].days.forEach(day => {
+          day.tasks.forEach((_, tIdx) => {
+            const taskId = `task-p${p}-d${day.dayNum}-t${tIdx}`;
+            pTotal++;
+            if (completedTasks.has(taskId)) pChecked++;
+          });
+        });
+
+        document.getElementById(`phase-${p}-badge`).innerText = `${pChecked}/${pTotal} Done`;
+      }
+    }
+
+    // STATE LOCALSTORAGE PERSISTENCE
+    function saveState() {
+      const stateObj = {
+        completed: Array.from(completedTasks),
+        currentPhase: currentPhase
+      };
+      localStorage.setItem("hawk_roadmap_state", JSON.stringify(stateObj));
+    }
+
+    function loadSavedState() {
+      const saved = localStorage.getItem("hawk_roadmap_state");
+      if (saved) {
+        try {
+          const stateObj = JSON.parse(saved);
+          stateObj.completed.forEach(id => completedTasks.add(id));
+          currentPhase = stateObj.currentPhase || 1;
+        } catch (e) {
+          console.error("Could not parse saved local storage state", e);
+        }
+      }
+    }
+
+    window.resetProgress = function() {
+      if (confirm("Are you sure you want to reset all roadmap tasks progress?")) {
+        completedTasks.clear();
+        saveState();
+        updateProgress();
+        switchPhase(currentPhase);
+      }
+    };
+
+    // TOKEN COST CALCULATOR LOGIC
+    function setupCalculatorListeners() {
+      sliderInfractions.addEventListener("input", (e) => {
+        valInfractions.innerText = e.target.value;
+        calculateCosts();
+      });
+
+      sliderResolution.addEventListener("input", (e) => {
+        valResolution.innerText = e.target.value === "0" ? "300px Crop" : "Full 1080p Image";
+        calculateCosts();
+      });
+    }
+
+    function calculateCosts() {
+      const infractionsPerDay = parseInt(sliderInfractions.value);
+      const isFullImage = parseInt(sliderResolution.value) === 1;
+      const infractionsPerMonth = infractionsPerDay * 30;
+
+      // Visual input tokens
+      const visualTokens = isFullImage ? 765 : 170;
+      
+      // Text system prompt and schemas
+      const textTokens = isFullImage ? 800 : 500;
+
+      // Prices per 1M tokens
+      const gptInputRate = 5.00;
+      const gptOutputRate = 15.00;
+      
+      const geminiInputRate = 0.075;
+      const geminiOutputRate = 0.30;
+
+      // Output response length
+      const outputTokens = 100;
+
+      // GPT Naive (Never caches, processes full image or larger tokens)
+      const gptTotalInput = visualTokens + textTokens;
+      const gptCostPerViolation = ((gptTotalInput * gptInputRate) + (outputTokens * gptOutputRate)) / 1000000;
+      const gptMonthlyCost = infractionsPerMonth * gptCostPerViolation;
+
+      // Gemini Optimized (Crops image, CACHES the text tokens, costing 0 for input prompt caches!)
+      // Effective input tokens = just the visual tokens
+      const geminiCostPerViolation = ((visualTokens * geminiInputRate) + (outputTokens * geminiOutputRate)) / 1000000;
+      const geminiMonthlyCost = infractionsPerMonth * geminiCostPerViolation;
+
+      // Update cost output text
+      priceGpt.innerText = `$${gptMonthlyCost.toFixed(2)}/mo`;
+      priceGemini.innerText = `$${geminiMonthlyCost.toFixed(3)}/mo`;
+
+      // Update visual comparison bars relative widths (max 100%)
+      const maxCost = Math.max(gptMonthlyCost, geminiMonthlyCost, 0.01);
+      const widthGpt = (gptMonthlyCost / maxCost) * 100;
+      const widthGemini = (geminiMonthlyCost / maxCost) * 100;
+
+      barGpt.style.width = `${Math.max(widthGpt, 1)}%`;
+      barGemini.style.width = `${Math.max(widthGemini, 1)}%`;
+
+      // Calculate savings percent
+      const savingsPercent = ((gptMonthlyCost - geminiMonthlyCost) / gptMonthlyCost) * 100;
+      savingsBadge.innerText = `Saves ${savingsPercent.toFixed(1)}% in Cloud API Costs`;
+    }
+  </script>
+</body>
+</html>
