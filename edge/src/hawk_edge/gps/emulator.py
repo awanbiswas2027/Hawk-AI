@@ -102,7 +102,7 @@ class RouteEmulator(GpsProvider):
         self.current_lon = self.waypoints[0]["lon"]
         self.current_speed_mps = 0.0
         self.current_waypoint_idx = 0
-        self.sim_time = datetime.now(UTC)
+        self.sim_time = datetime(2026, 6, 3, 0, 0, 0, tzinfo=UTC)
 
         # Pre-processed signal stops checklist to prevent stopping multiple times at same spot
         self.visited_stops: set[int] = set()
