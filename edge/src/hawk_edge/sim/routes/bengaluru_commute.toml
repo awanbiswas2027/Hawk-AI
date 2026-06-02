@@ -1,0 +1,46 @@
+[route]
+name = "Indiranagar to Koramangala Commute"
+city = "Bengaluru"
+base_altitude_m = 920.0
+
+[[route.waypoints]]
+lat = 12.9784
+lon = 77.6408
+name = "Indiranagar 100ft Road Start"
+speed_limit_kmh = 40.0
+has_signal = false
+
+[[route.waypoints]]
+lat = 12.9698
+lon = 77.6415
+name = "Doopanahalli Junction"
+speed_limit_kmh = 30.0
+has_signal = true
+
+[[route.waypoints]]
+lat = 12.9612
+lon = 77.6387
+name = "Domlur Flyover Start"
+speed_limit_kmh = 50.0
+has_signal = false
+
+[[route.waypoints]]
+lat = 12.9565
+lon = 77.6342
+name = "Intermediate Flyover Span"
+speed_limit_kmh = 50.0
+has_signal = false
+
+[[route.waypoints]]
+lat = 12.9452
+lon = 77.6278
+name = "Inner Ring Road Transit"
+speed_limit_kmh = 60.0
+has_signal = false
+
+[[route.waypoints]]
+lat = 12.9352
+lon = 77.6245
+name = "Koramangala Sony World Junction"
+speed_limit_kmh = 30.0
+has_signal = true

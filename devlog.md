@@ -6,6 +6,20 @@ This log tracks the daily development progress, architectural iterations, bug fi
 
 ## 📅 Log Entries
 
+### [2026-06-03] - Day 2: GPS Route Emulation
+*   **Accomplishments**:
+    *   Designed and implemented the core GPS telemetry module under `hawk_edge.gps` inside `src/`.
+    *   Defined the `GpsTelemetry` data model with all 11 NMEA-required fields ($GPRMC and $GPGGA compatible) and `GpsProvider` shared interface contract.
+    *   Developed the `GpsNoiseModel` using a mean-reverting Ornstein-Uhlenbeck random walk drift, supporting distinct noise profiles for open skies and urban canyons/flyovers.
+    *   Built `TrapezoidalSpeedProfile` modeling physical dynamics (acceleration, deceleration, signal stopping distance) and `TrafficStopModel` simulating traffic signal timeouts.
+    *   Externalized route definitions to `bengaluru_commute.toml` parsing waypoints, speed limits, and signal stops using Python 3.11's standard `tomllib`.
+    *   Coded `RouteEmulator` project projection engine generating realistic coordinate paths.
+    *   Created extensive test coverage verifying determinism (using random seeds), coordinate boundary constraints, NMEA schema shapes, and speed profiles (passing all 21 test suites).
+*   **Work in Progress (WIP)**:
+    *   Structuring the mock GPS serial output daemon to yield formatted NMEA GPRMC and GPGGA sentences on localhost port.
+*   **Next Steps**:
+    *   Implement the Day 3 Mock GPS Daemon with socket stream output matching the physical Neo-6M UART receiver configuration.
+
 ### [2026-06-02] - Day 1: Simulation Workspace Setup
 *   **Accomplishments**:
     *   Transitioned the edge simulation workspace to a production-ready package structure under `edge/`.
