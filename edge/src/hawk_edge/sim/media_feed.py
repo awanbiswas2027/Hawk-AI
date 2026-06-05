@@ -1,7 +1,6 @@
 """Mock video streaming reader and synthetic media generation."""
 import logging
 from collections.abc import Callable
-from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
 
@@ -9,20 +8,9 @@ import cv2
 import numpy as np
 
 from hawk_edge.sim.config import SyntheticVideoConfig
+from hawk_edge.video.types import FramePacket, FrameProvider
 
 logger = logging.getLogger(__name__)
-
-
-@dataclass(frozen=True)
-class FramePacket:
-    """Richer container for frame data and synchronization telemetry."""
-    ok: bool
-    frame: np.ndarray | None
-    frame_index: int
-    loop_count: int
-    source_timestamp_ms: float
-    width: int
-    height: int
 
 
 def generate_synthetic_traffic_video(
@@ -95,15 +83,26 @@ def generate_synthetic_traffic_video(
             "color": color
         })
 
+    # Try opening VideoWriter with target codec, fallback to MJPG/AVI if failed
     fourcc = cv2.VideoWriter_fourcc(*codec)  # type: ignore[attr-defined]
     logger.info("Opening VideoWriter for %s (codec: %s)", file_path, codec)
     
     out = cv2.VideoWriter(str(file_path), fourcc, fps, (width, height))
     if not out.isOpened():
-        raise RuntimeError(
-            f"Failed to open VideoWriter for path '{file_path}' using codec '{codec}'. "
-            "Please check OpenCV installation and codec availability."
+        fallback_codec = "MJPG"
+        fallback_path = file_path.with_suffix(".avi")
+        logger.warning(
+            "Failed to open VideoWriter with codec '%s'. Falling back to '%s' codec at path: %s",
+            codec, fallback_codec, fallback_path
         )
+        fourcc = cv2.VideoWriter_fourcc(*fallback_codec)  # type: ignore[attr-defined]
+        out = cv2.VideoWriter(str(fallback_path), fourcc, fps, (width, height))
+        if not out.isOpened():
+            raise RuntimeError(
+                f"Failed to open VideoWriter with primary codec '{codec}' "
+                f"and fallback codec '{fallback_codec}'. Verify OpenCV installation."
+            )
+        file_path = fallback_path
         
     try:
         for f in range(total_frames):
@@ -118,7 +117,7 @@ def generate_synthetic_traffic_video(
             cv2.rectangle(frame, (road_left - 10, 0), (road_left, height), shoulder_color, -1)
             cv2.rectangle(frame, (road_right, 0), (road_right + 10, height), shoulder_color, -1)
             
-            #  solid yellow boundary line
+            # solid yellow boundary line
             cv2.line(frame, (road_left, 0), (road_left, height), yellow_line_color, 2)
             cv2.line(frame, (road_right, 0), (road_right, height), yellow_line_color, 2)
             
@@ -210,7 +209,7 @@ def generate_synthetic_traffic_video(
     return file_path
 
 
-class VideoFileFeed:
+class VideoFileFeed(FrameProvider):
     """Wrapper around cv2.VideoCapture that reads frames and handles continuous looping."""
 
     def __init__(
@@ -234,7 +233,7 @@ class VideoFileFeed:
                 )
                 gen_func = generator or generate_synthetic_traffic_video
                 config = generation_config or SyntheticVideoConfig()
-                gen_func(
+                generated_path = gen_func(
                     file_path=self._video_path,
                     duration_sec=config.duration_sec,
                     fps=config.fps,
@@ -243,6 +242,8 @@ class VideoFileFeed:
                     seed=config.seed,
                     codec=config.codec,
                 )
+                # Update path in case the generator changed extension (e.g. fallback to .avi)
+                self._video_path = Path(generated_path)
             else:
                 raise FileNotFoundError(f"Video file not found at path: '{self._video_path}'")
                 
@@ -264,7 +265,7 @@ class VideoFileFeed:
         
         # Validate metadata properties
         if self._width <= 0 or self._height <= 0 or self._fps <= 0 or self._frame_count <= 0:
-            self.close()
+            self.release()
             raise ValueError(
                 f"Invalid video metadata: width={self._width}, height={self._height}, "
                 f"fps={self._fps}, frame_count={self._frame_count}. "
@@ -279,12 +280,8 @@ class VideoFileFeed:
             self._video_path, self._width, self._height, self._fps, self._frame_count
         )
 
-    def read(self) -> tuple[bool, np.ndarray | None]:
-        """Reads the next BGR frame from the video stream.
-        
-        If EOF is hit and loop=True, automatically rewinds to frame 0 and reads again.
-        Returns (success, frame).
-        """
+    def _read_internal(self) -> tuple[bool, np.ndarray | None]:
+        """Reads the next raw BGR frame from OpenCV."""
         if not self._is_open:
             raise RuntimeError("VideoFileFeed is closed.")
             
@@ -298,7 +295,6 @@ class VideoFileFeed:
                 self._cap.set(cv2.CAP_PROP_POS_FRAMES, 0)
                 ok, frame = self._cap.read()
                 if not ok:
-                    # Reread failed even after seek (could be corrupted file)
                     logger.error(
                         "Failed to rewind and read frame 0 for looped source '%s'.",
                         self._video_path
@@ -316,11 +312,21 @@ class VideoFileFeed:
             
         return ok, frame
 
-    def read_packet(self) -> FramePacket:
-        """Reads the next frame and bundles it with detailed sync metadata in a FramePacket."""
-        ok, frame = self.read()
+    def read(self) -> tuple[bool, np.ndarray | None]:
+        """Legacy compatibility method wrapper."""
+        return self._read_internal()
+
+    def get_frame(self) -> np.ndarray | None:
+        """Reads and returns the next BGR frame array from the video stream.
         
-        # Timestamp based on frame index and fps (monotonic simulation time)
+        Conforms to LLD FrameProvider contract.
+        """
+        ok, frame = self._read_internal()
+        return frame if ok else None
+
+    def get_packet(self) -> FramePacket | None:
+        """Reads and returns the next FramePacket with sync metadata."""
+        ok, frame = self._read_internal()
         if ok:
             idx = self._current_frame_index - 1
             source_timestamp_ms = (idx * 1000.0) / self._fps
@@ -338,18 +344,22 @@ class VideoFileFeed:
             height=self._height,
         )
 
-    def close(self) -> None:
+    def release(self) -> None:
         """Idempotently releases standard OpenCV video capture resources."""
         if self._is_open:
             self._cap.release()
             self._is_open = False
             logger.info("Closed video feed for source '%s'", self._video_path)
 
+    def close(self) -> None:
+        """Legacy close wrapper calling release."""
+        self.release()
+
     def __enter__(self) -> "VideoFileFeed":
         return self
 
     def __exit__(self, exc_type: Any, exc_val: Any, exc_tb: Any) -> None:
-        self.close()
+        self.release()
 
     @property
     def is_open(self) -> bool:

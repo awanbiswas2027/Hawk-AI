@@ -7,10 +7,10 @@ import pytest
 
 from hawk_edge.sim.config import SyntheticVideoConfig
 from hawk_edge.sim.media_feed import (
-    FramePacket,
     VideoFileFeed,
     generate_synthetic_traffic_video,
 )
+from hawk_edge.video.types import FramePacket
 
 
 @pytest.fixture
@@ -51,6 +51,30 @@ def test_generate_synthetic_video(temp_video_path: Path) -> None:
     cap.release()
 
 
+def test_generate_synthetic_video_codec_fallback(tmp_path: Path) -> None:
+    """Verify that synthetic generation falls back to avi/MJPG if primary codec fails."""
+    target_path = tmp_path / "test_fallback.mp4"
+    # Using an invalid codec name 'invalid_codec' to trigger fallback
+    path = generate_synthetic_traffic_video(
+        file_path=target_path,
+        duration_sec=1,
+        fps=5,
+        width=160,
+        height=90,
+        codec="XYZW"
+    )
+    
+    # Ensure it rewrote extension to .avi and successfully wrote the file
+    assert path.exists()
+    assert path.suffix == ".avi"
+    
+    # Check that the file is readable
+    cap = cv2.VideoCapture(str(path))
+    assert cap.isOpened()
+    assert int(cap.get(cv2.CAP_PROP_FRAME_WIDTH)) == 160
+    cap.release()
+
+
 def test_generate_validation_errors(temp_video_path: Path) -> None:
     """Ensure negative or zero bounds raise ValueError during generation."""
     with pytest.raises(ValueError, match="duration_sec must be positive"):
@@ -87,12 +111,12 @@ def test_video_file_feed_metadata(temp_video_path: Path) -> None:
     assert feed.loop_count == 0
     assert feed.is_open is True
     
-    feed.close()
+    feed.release()
     assert feed.is_open is False
 
 
-def test_video_file_feed_read_sequential(temp_video_path: Path) -> None:
-    """Verify reading frames sequentially from VideoFileFeed."""
+def test_video_file_feed_get_frame_sequential(temp_video_path: Path) -> None:
+    """Verify reading frames sequentially from VideoFileFeed using get_frame."""
     width, height, fps, duration = 320, 180, 5, 1
     total_frames = duration * fps  # 5 frames
     generate_synthetic_traffic_video(
@@ -106,31 +130,28 @@ def test_video_file_feed_read_sequential(temp_video_path: Path) -> None:
     with VideoFileFeed(temp_video_path, loop=False) as feed:
         for idx in range(total_frames):
             assert feed.current_frame_index == idx
-            ok, frame = feed.read()
-            assert ok is True
+            frame = feed.get_frame()
             assert frame is not None
             assert frame.shape == (height, width, 3)
             assert feed.current_frame_index == idx + 1
             
         # The next read should hit EOF
-        ok, frame = feed.read()
-        assert ok is False
+        frame = feed.get_frame()
         assert frame is None
 
 
 def test_video_file_feed_no_loop(temp_video_path: Path) -> None:
-    """Verify that loop=False returns False/None after EOF."""
+    """Verify that loop=False returns None after EOF."""
     generate_synthetic_traffic_video(temp_video_path, duration_sec=1, fps=5, width=320, height=180)
     
     with VideoFileFeed(temp_video_path, loop=False) as feed:
         # Read all 5 frames
         for _ in range(5):
-            ok, _ = feed.read()
-            assert ok is True
+            frame = feed.get_frame()
+            assert frame is not None
             
-        # Subsequent reads return False
-        ok, frame = feed.read()
-        assert ok is False
+        # Subsequent reads return None
+        frame = feed.get_frame()
         assert frame is None
 
 
@@ -141,34 +162,33 @@ def test_video_file_feed_loop(temp_video_path: Path) -> None:
     with VideoFileFeed(temp_video_path, loop=True) as feed:
         # Read 5 frames
         for idx in range(5):
-            ok, _ = feed.read()
-            assert ok is True
+            frame = feed.get_frame()
+            assert frame is not None
             assert feed.loop_count == 0
             assert feed.current_frame_index == idx + 1
             
         # 6th read should trigger looping
-        ok, frame = feed.read()
-        assert ok is True
+        frame = feed.get_frame()
         assert frame is not None
         assert feed.loop_count == 1
         assert feed.current_frame_index == 1
         
         # Read remaining 4 frames of second loop
         for idx in range(1, 5):
-            ok, _ = feed.read()
-            assert ok is True
+            frame = feed.get_frame()
+            assert frame is not None
             assert feed.loop_count == 1
             assert feed.current_frame_index == idx + 1
             
         # 11th read should loop again
-        ok, _ = feed.read()
-        assert ok is True
+        frame = feed.get_frame()
+        assert frame is not None
         assert feed.loop_count == 2
         assert feed.current_frame_index == 1
 
 
-def test_read_packet(temp_video_path: Path) -> None:
-    """Verify read_packet returns correct FramePacket metadata."""
+def test_get_packet(temp_video_path: Path) -> None:
+    """Verify get_packet returns correct FramePacket metadata."""
     width, height, fps = 320, 180, 5
     generate_synthetic_traffic_video(
         temp_video_path, duration_sec=1, fps=fps, width=width, height=height
@@ -176,7 +196,7 @@ def test_read_packet(temp_video_path: Path) -> None:
     
     with VideoFileFeed(temp_video_path, loop=True) as feed:
         # First packet
-        pkt = feed.read_packet()
+        pkt = feed.get_packet()
         assert isinstance(pkt, FramePacket)
         assert pkt.ok is True
         assert pkt.frame is not None
@@ -188,16 +208,16 @@ def test_read_packet(temp_video_path: Path) -> None:
         assert pkt.height == height
         
         # Second packet
-        pkt2 = feed.read_packet()
+        pkt2 = feed.get_packet()
         assert pkt2.frame_index == 1
         assert pkt2.source_timestamp_ms == 1000.0 / fps  # 200ms
         
         # Read up to loop
         for _ in range(3):
-            feed.read_packet()
+            feed.get_packet()
             
         # 6th packet triggers loop
-        pkt6 = feed.read_packet()
+        pkt6 = feed.get_packet()
         assert pkt6.ok is True
         assert pkt6.frame_index == 0
         assert pkt6.loop_count == 1
@@ -233,10 +253,11 @@ def test_auto_generate_with_injected_generator(tmp_path: Path) -> None:
     )
     
     assert called is True
-    assert fake_path.exists()
+    # In case generator returns fallback .avi, look for either
+    assert Path(feed.video_path).exists()
     assert feed.width == 160
     assert feed.height == 90
-    feed.close()
+    feed.release()
 
 
 def test_deterministic_generation(tmp_path: Path) -> None:
@@ -255,11 +276,10 @@ def test_deterministic_generation(tmp_path: Path) -> None:
     f2 = VideoFileFeed(path2, loop=False)
     f3 = VideoFileFeed(path3, loop=False)
     
-    ok1, frame1 = f1.read()
-    ok2, frame2 = f2.read()
-    ok3, frame3 = f3.read()
+    frame1 = f1.get_frame()
+    frame2 = f2.get_frame()
+    frame3 = f3.get_frame()
     
-    assert ok1 and ok2 and ok3
     assert frame1 is not None and frame2 is not None and frame3 is not None
     
     # Seed 42 instances must match exactly
@@ -268,9 +288,9 @@ def test_deterministic_generation(tmp_path: Path) -> None:
     # Seed 100 frame should differ from Seed 42
     assert not np.array_equal(frame1, frame3)
     
-    f1.close()
-    f2.close()
-    f3.close()
+    f1.release()
+    f2.release()
+    f3.release()
 
 
 def test_invalid_metadata_errors(monkeypatch, temp_video_path: Path) -> None:
@@ -292,16 +312,16 @@ def test_invalid_metadata_errors(monkeypatch, temp_video_path: Path) -> None:
 
 
 def test_close_idempotent(temp_video_path: Path) -> None:
-    """Verify that calling close multiple times is safe and a no-op."""
+    """Verify that calling release multiple times is safe and a no-op."""
     generate_synthetic_traffic_video(temp_video_path, duration_sec=1, fps=5, width=160, height=90)
     feed = VideoFileFeed(temp_video_path, loop=False)
     assert feed.is_open is True
     
-    feed.close()
+    feed.release()
     assert feed.is_open is False
     
-    # Calling close again should not raise errors
-    feed.close()
+    # Calling release again should not raise errors
+    feed.release()
     assert feed.is_open is False
 
 
@@ -309,7 +329,7 @@ def test_read_on_closed_feed_raises(temp_video_path: Path) -> None:
     """Verify that reading from a closed feed raises RuntimeError."""
     generate_synthetic_traffic_video(temp_video_path, duration_sec=1, fps=5, width=160, height=90)
     feed = VideoFileFeed(temp_video_path, loop=False)
-    feed.close()
+    feed.release()
     
     with pytest.raises(RuntimeError, match="VideoFileFeed is closed"):
-        feed.read()
+        feed.get_frame()
