@@ -6,6 +6,38 @@ This log tracks the daily development progress, architectural iterations, bug fi
 
 ## 📅 Log Entries
 
+### [2026-06-06] - Day 6: SQLite Offline Persistence
+*   **Accomplishments**:
+    *   Designed and implemented the structured `ViolationEvent` dataclass to serialize and store metadata fields and raw cropped image bytes.
+    *   Implemented `SQLiteBuffer` using a background thread and queue to execute all CRUD tasks sequentially, ensuring zero database contention or thread locking errors (`database is locked`).
+    *   Programmed capacity limits and circular eviction rules (synced records evicted first, followed by the oldest pending records).
+    *   Created a comprehensive test suite in `tests/test_persistence.py` verifying schema setup, CRUD operations, circular eviction bounds, and multi-threaded write safety.
+    *   Verified 100% build compatibility and passed all 61 test suites.
+*   **Next Steps**:
+    *   Begin Phase 1 Day 7 integration for offline connectivity state machine transition.
+
+### [2026-06-05] - Day 5: Threaded Ingestion & Buffer
+*   **Accomplishments**:
+    *   Formalized the shared `FrameProvider` Protocol contract and the `FramePacket` dataclass under `hawk_edge.video.types`.
+    *   Implemented the thread-safe circular queue `FrameRingBuffer` utilizing `collections.deque` and a `threading.Lock` to support evidence buffering.
+    *   Created `CameraGrabber` with a background thread pacing fetches to `target_fps` and performing real-time frame drops under slow-consumer scenarios.
+    *   Refactored `VideoFileFeed` to conform to `FrameProvider`.
+    *   Created test suites `tests/test_frame_buffer.py` and `tests/test_camera_stream.py`.
+
+### [2026-06-04] - Day 4: Mock Video Streams
+*   **Accomplishments**:
+    *   Created the video feed decoding module `VideoFileFeed` under `hawk_edge.sim.media_feed` that loops files continuously and yields BGR frames.
+    *   Built a deterministic synthetic traffic video generator rendering scrolling lanes, cars, license plates, and timestamps.
+    *   Externalized configuration parameters to `hawk_edge/sim/config.py`.
+    *   Implemented automated tests in `tests/test_media_feed.py`.
+
+### [2026-06-03] - Day 3: Mock GPS Daemon
+*   **Accomplishments**:
+    *   Built coordinate conversion methods translating decimal degrees to NMEA string representations.
+    *   Coded `$GPRMC` and `$GPGGA` sentence formatting and XOR checksum calculations.
+    *   Implemented a dual-mode `GpsDaemon` context manager supporting virtual UART (PTY) modes on Unix and TCP port connections on Windows.
+    *   Added round-trip parsing tests in `tests/test_gps_nmea.py` and daemon integration tests in `tests/test_gps_daemon.py`.
+
 ### [2026-06-03] - Day 2: GPS Route Emulation
 *   **Accomplishments**:
     *   Designed and implemented the core GPS telemetry module under `hawk_edge.gps` inside `src/`.
