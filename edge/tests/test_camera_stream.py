@@ -2,6 +2,7 @@
 import time
 from pathlib import Path
 
+import cv2
 import numpy as np
 import pytest
 
@@ -152,3 +153,41 @@ def test_camera_grabber_inactive_read_raises(sample_video_path: Path) -> None:
     
     with pytest.raises(RuntimeError, match="CameraGrabber is not running"):
         grabber.get_packet()
+
+
+def test_camera_grabber_hardware_source(monkeypatch: pytest.MonkeyPatch) -> None:
+    """Verify that hardware camera sources (source=int) use wall-clock timestamps."""
+    import unittest.mock as mock
+
+    # Mock cv2.VideoCapture
+    mock_cap = mock.MagicMock()
+    mock_cap.isOpened.return_value = True
+    
+    def mock_get(prop: int) -> float:
+        if prop == cv2.CAP_PROP_FRAME_WIDTH:
+            return 640.0
+        if prop == cv2.CAP_PROP_FRAME_HEIGHT:
+            return 480.0
+        if prop == cv2.CAP_PROP_FPS:
+            return 30.0
+        return 0.0
+
+    mock_cap.get.side_effect = mock_get
+    
+    # Mock read() to return a mock frame
+    mock_frame = np.zeros((480, 640, 3), dtype=np.uint8)
+    mock_cap.read.return_value = (True, mock_frame)
+
+    # Monkeypatch cv2.VideoCapture to return our mock
+    monkeypatch.setattr(cv2, "VideoCapture", lambda dev_id: mock_cap)
+
+    # Instantiate CameraGrabber with device ID 0
+    with CameraGrabber(source=0, target_fps=30, max_queue_size=5, realtime=True) as grabber:
+        # Give a small window for the thread to grab at least one frame
+        time.sleep(0.1)
+        pkt = grabber.get_packet()
+        assert pkt is not None
+        assert pkt.ok is True
+        # The timestamp should be close to the current system time in ms
+        current_time_ms = time.time() * 1000.0
+        assert abs(pkt.source_timestamp_ms - current_time_ms) < 5000.0  # within 5 seconds

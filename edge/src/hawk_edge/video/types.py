@@ -1,13 +1,17 @@
 """Type definitions and protocols for the video ingestion subsystem."""
 from dataclasses import dataclass
-from typing import Protocol
+from typing import Protocol, runtime_checkable
 
 import numpy as np
 
 
 @dataclass(frozen=True)
 class FramePacket:
-    """Richer container for frame data and synchronization telemetry."""
+    """Richer container for frame data and synchronization telemetry.
+
+    NOTE: The 'frame' field contains a numpy array, which is a shared mutable reference.
+    Modify it with care to avoid side-effects in buffer histories or concurrent reads.
+    """
     ok: bool
     frame: np.ndarray | None
     frame_index: int
@@ -17,6 +21,7 @@ class FramePacket:
     height: int
 
 
+@runtime_checkable
 class FrameProvider(Protocol):
     """Interface contract shared between CameraGrabber and VideoFileFeed."""
 

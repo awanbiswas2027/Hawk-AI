@@ -9,7 +9,6 @@ from typing import Any
 import cv2
 import numpy as np
 
-from hawk_edge.sim.media_feed import VideoFileFeed
 from hawk_edge.video.types import FramePacket, FrameProvider
 
 logger = logging.getLogger(__name__)
@@ -46,14 +45,15 @@ class CameraGrabber(FrameProvider):
         # Determine and initialize the frame source
         self._managed_source: FrameProvider | None = None
         self._cap: cv2.VideoCapture | None = None
+        self._source: FrameProvider | None = None
         
         # Check if the source is already a FrameProvider
-        # (Using hasattr as isinstance check with Protocol can be tricky)
-        if hasattr(source, "get_frame") and hasattr(source, "release"):
-            self._source: Any = source
+        if isinstance(source, FrameProvider):
+            self._source = source
         elif isinstance(source, (str, Path)):
             # Open video file using our auto-looping VideoFileFeed
             logger.info("Instantiating VideoFileFeed for file source: %s", source)
+            from hawk_edge.sim.media_feed import VideoFileFeed
             self._managed_source = VideoFileFeed(source, loop=True, auto_generate=False)
             self._source = self._managed_source
         elif isinstance(source, int):
@@ -182,7 +182,10 @@ class CameraGrabber(FrameProvider):
                 break
 
             # 2. Package the frame
-            ts_ms = (frame_idx * 1000.0) / self._target_fps
+            if self._cap is not None:
+                ts_ms = time.time() * 1000.0
+            else:
+                ts_ms = (frame_idx * 1000.0) / self._target_fps
             pkt = FramePacket(
                 ok=True,
                 frame=frame,
@@ -199,7 +202,8 @@ class CameraGrabber(FrameProvider):
                     try:
                         # Drop the oldest frame to preserve low latency
                         self._queue.get_nowait()
-                        self._frames_dropped += 1
+                        with self._lock:
+                            self._frames_dropped += 1
                         logger.debug("Realtime queue full: oldest frame dropped.")
                     except queue.Empty:
                         pass
@@ -238,7 +242,7 @@ class CameraGrabber(FrameProvider):
             
         try:
             # Pop next item. Don't block forever to allow graceful cleanup
-            return self._queue.get(timeout=0.2)
+            return self._queue.get(timeout=1.5 / self._target_fps)
         except queue.Empty:
             return None
 

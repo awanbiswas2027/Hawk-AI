@@ -23,6 +23,12 @@ def test_frame_buffer_initialization() -> None:
         FrameRingBuffer(capacity=-10)
 
 
+def test_frame_buffer_default_capacity() -> None:
+    """Verify that the default capacity of FrameRingBuffer is 15."""
+    buf = FrameRingBuffer()
+    assert buf.capacity == 15
+
+
 def test_frame_buffer_push_type_validation() -> None:
     """Verify that the buffer strictly enforces numpy ndarrays."""
     buf = FrameRingBuffer(capacity=5)

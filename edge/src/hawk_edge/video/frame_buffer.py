@@ -9,10 +9,10 @@ class FrameRingBuffer:
     """Thread-safe circular buffer for frame history.
 
     SRS-F-1.2: Must retain current frame + 3 preceding frames.
-    Roadmap Day 3: Target 5 seconds at 15 FPS (75 frames).
+    HLD FrameBufferManager: Default capacity of 15 frames.
     """
 
-    def __init__(self, capacity: int = 75) -> None:
+    def __init__(self, capacity: int = 15) -> None:
         if capacity <= 0:
             raise ValueError("Buffer capacity must be positive")
         self._buffer: deque[np.ndarray] = deque(maxlen=capacity)
@@ -37,9 +37,9 @@ class FrameRingBuffer:
             raise ValueError("n must be positive")
             
         with self._lock:
-            # Safely slice the end of the buffer up to the current count
-            # list(deque) creates a copy, which we slice
-            return list(self._buffer)[-n:]
+            size = len(self._buffer)
+            start = max(0, size - n)
+            return [self._buffer[i] for i in range(start, size)]
 
     @property
     def total_frames_processed(self) -> int:
