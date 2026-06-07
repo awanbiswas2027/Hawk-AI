@@ -13,3 +13,4 @@ class EdgeConfig:
     queue_timeout_factor: float = 1.5
     data_dir: Path = field(default_factory=lambda: Path("data"))
     db_path: Path = field(default_factory=lambda: Path("data/hawk.db"))
+    db_capacity: int = 2000

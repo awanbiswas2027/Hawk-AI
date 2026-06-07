@@ -62,7 +62,7 @@ def test_sqlite_buffer_crud_operations(temp_db_path: Path) -> None:
         assert len(db.get_pending_events()) == 0
 
         # Save event
-        assert db.save_event(event) is True
+        assert db.save_event(event) == 1
         assert event.id is not None
         assert event.id == 1
 
@@ -104,16 +104,16 @@ def test_sqlite_buffer_eviction_oldest_pending(temp_db_path: Path) -> None:
         ]
 
         # Save first 3 events
-        assert db.save_event(events[0]) is True  # ID 1
-        assert db.save_event(events[1]) is True  # ID 2
-        assert db.save_event(events[2]) is True  # ID 3
+        assert db.save_event(events[0]) is not None  # ID 1
+        assert db.save_event(events[1]) is not None  # ID 2
+        assert db.save_event(events[2]) is not None  # ID 3
 
         pending = db.get_pending_events()
         assert len(pending) == 3
         assert [e.id for e in pending] == [1, 2, 3]
 
         # Save 4th event (triggers eviction of absolute oldest: ID 1)
-        assert db.save_event(events[3]) is True  # ID 4
+        assert db.save_event(events[3]) is not None  # ID 4
         
         pending_after = db.get_pending_events()
         assert len(pending_after) == 3
@@ -138,15 +138,15 @@ def test_sqlite_buffer_eviction_synced_first(temp_db_path: Path) -> None:
         ]
 
         # Save first 3 events
-        assert db.save_event(events[0]) is True  # ID 1
-        assert db.save_event(events[1]) is True  # ID 2
-        assert db.save_event(events[2]) is True  # ID 3
+        assert db.save_event(events[0]) is not None  # ID 1
+        assert db.save_event(events[1]) is not None  # ID 2
+        assert db.save_event(events[2]) is not None  # ID 3
 
         # Mark ID 2 as synced
         assert db.mark_synced(2) is True
 
         # Save 4th event (triggers eviction. ID 2 is synced, so evict it first)
-        assert db.save_event(events[3]) is True  # ID 4
+        assert db.save_event(events[3]) is not None  # ID 4
 
         # Verify remaining events: ID 2 should be evicted; IDs 1, 3, 4 remain.
         pending = db.get_pending_events()
@@ -171,7 +171,7 @@ def test_sqlite_buffer_thread_safety(temp_db_path: Path) -> None:
                     confidence=0.85,
                     image_blob=b"bytes",
                 )
-                assert db.save_event(event) is True
+                assert db.save_event(event) is not None
 
         # Launch concurrent worker threads
         with concurrent.futures.ThreadPoolExecutor(max_workers=num_threads) as executor:
@@ -208,3 +208,120 @@ def test_sqlite_buffer_closed_operations(temp_db_path: Path) -> None:
 
     with pytest.raises(RuntimeError):
         db.mark_synced(1)
+
+
+def test_sqlite_buffer_capacity_boundary(temp_db_path: Path) -> None:
+    """Test capacity boundaries by saving exactly the limit and verifying count and eviction."""
+    with SQLiteBuffer(temp_db_path, capacity=10) as db:
+        # Save exactly 10 events
+        for i in range(10):
+            event = ViolationEvent(
+                device_uuid=f"dev-{i}",
+                timestamp="2026-06-05T12:00:00Z",
+                latitude=12.0,
+                longitude=77.0,
+                violation_type="NO_HELMET",
+                confidence=0.8,
+                image_blob=b"bytes",
+            )
+            assert db.save_event(event) is not None
+
+        # Verify DB is full and row count matches cached count
+        assert len(db.get_pending_events()) == 10
+        assert db._current_count == 10
+
+        # Save 11th event (should trigger eviction of first event: ID 1)
+        event11 = ViolationEvent(
+            device_uuid="dev-11",
+            timestamp="2026-06-05T12:00:00Z",
+            latitude=12.0,
+            longitude=77.0,
+            violation_type="NO_HELMET",
+            confidence=0.8,
+            image_blob=b"bytes",
+        )
+        assert db.save_event(event11) == 11
+
+        pending = db.get_pending_events()
+        assert len(pending) == 10
+        assert pending[0].id == 2  # ID 1 evicted
+        assert db._current_count == 10
+
+
+def test_sqlite_buffer_mark_failed(temp_db_path: Path) -> None:
+    """Test updating sync_status to failed/retry (2)."""
+    event = ViolationEvent(
+        device_uuid="dev-test",
+        timestamp="2026-06-05T12:00:00Z",
+        latitude=12.0,
+        longitude=77.0,
+        violation_type="NO_HELMET",
+        confidence=0.8,
+        image_blob=b"bytes",
+    )
+    with SQLiteBuffer(temp_db_path) as db:
+        event_id = db.save_event(event)
+        assert event_id is not None
+        assert event.sync_status == 0
+
+        # Mark failed
+        assert db.mark_failed(event_id) is True
+
+        # Verify it is no longer pending (since pending only returns sync_status=0)
+        assert len(db.get_pending_events()) == 0
+
+        # Verify in database directly
+        import sqlite3
+        conn = sqlite3.connect(temp_db_path)
+        cursor = conn.cursor()
+        cursor.execute("SELECT sync_status FROM offline_events WHERE id = ?", (event_id,))
+        assert cursor.fetchone()[0] == 2
+        conn.close()
+
+
+def test_sqlite_buffer_blob_size_validation(temp_db_path: Path) -> None:
+    """Test that saving a blob larger than max_blob_size raises ValueError."""
+    # Set limit to 10 bytes
+    with SQLiteBuffer(temp_db_path, max_blob_size=10) as db:
+        event = ViolationEvent(
+            device_uuid="dev-test",
+            timestamp="2026-06-05T12:00:00Z",
+            latitude=12.0,
+            longitude=77.0,
+            violation_type="NO_HELMET",
+            confidence=0.8,
+            image_blob=b"this_is_too_long_for_ten_bytes",
+        )
+        with pytest.raises(ValueError, match="exceeds maximum configured limit"):
+            db.save_event(event)
+
+
+def test_sqlite_buffer_from_config(temp_db_path: Path) -> None:
+    """Test constructor loading configuration via EdgeConfig."""
+    from hawk_edge.config import EdgeConfig
+    config = EdgeConfig(
+        db_path=temp_db_path,
+        db_capacity=42,
+    )
+    with SQLiteBuffer.from_config(config) as db:
+        assert db.db_path == temp_db_path
+        assert db.capacity == 42
+
+
+def test_sqlite_buffer_disk_full(temp_db_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    """Test that database refuses inserts when disk space is critically low."""
+    event = ViolationEvent(
+        device_uuid="dev-test",
+        timestamp="2026-06-05T12:00:00Z",
+        latitude=12.0,
+        longitude=77.0,
+        violation_type="NO_HELMET",
+        confidence=0.8,
+        image_blob=b"bytes",
+    )
+    with SQLiteBuffer(temp_db_path) as db:
+        # Mock has_free_space to return False
+        monkeypatch.setattr(db, "has_free_space", lambda: False)
+
+        # Attempt to save should return None and log warning
+        assert db.save_event(event) is None
